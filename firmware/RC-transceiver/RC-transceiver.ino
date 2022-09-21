@@ -33,8 +33,9 @@
 #include "RF24.h"
 
 #include "rc-transceiver.h"
-#include "rc_message_types.h"
 #include "rc_hmi.h" //user interface (buttons, ...)
+#include "rc_message_types.h"
+
 
 /* Hardware configuration: Set up nRF24L01 radio on SPI bus plus pins 7 & 8 */
 RF24 radio(PIN_NRF_CE,PIN_NRF_CSN);
@@ -58,6 +59,14 @@ void setup()
   //common setup
   radio.begin(); //use default settings
   radio.startListening();
+
+  //rx/tx specific setup
+  #if(USED_TARGET == TARGET_TRANSMITTER)
+    //send out radio packet COMMAND_TYPE_STARTUP
+  #else if( USED_TARGET == TARGET_RECEIVER)
+
+  #endif
+  
 }
 
 void setup_transmitter()
@@ -68,7 +77,7 @@ void setup_transmitter()
     //procceed if it is in range
   }
   else
-  {
+  {  
     //go to sleep forever, start again only by (power-)reset
   }
   
@@ -82,7 +91,7 @@ void setup_receiver()
   
 }
 
-//////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void loop() 
 {
   // put your main code here, to run repeatedly:
@@ -93,12 +102,21 @@ void loop()
   #endif
 }
 
+//////////////////////////////////////////////////////////////////////////////
 void loop_transmitter()
 {
+  //check battery and powerbutton state
+  system_check();
+  
+  //check if HMI data changed
+  if(hmi_has_changed())
+  {
+    //send out last_hmi_data via radio
+  }
 
   go_to_sleep_ms(SLEEP_TIME_MS);
 }
-
+//////////////////////////////////////////////////////////////////////////////
 void loop_receiver()
 {
   if( radio.available())

@@ -33,6 +33,10 @@ void loop_receiver();
 
 #define SLEEP_TIME_MS 10
 void go_to_sleep_ms(uint8_t ms_until_wakeup); //go to sleep to save battery
+bool battery_voltage_ok();
+void system_shutdown();
+void system_check();
+bool check_battery_voltage(int adc_pin, int min_usable_voltage_mv);
 
 
 // Battery Voltage Measurement
@@ -43,6 +47,40 @@ bool check_battery_voltage(int adc_pin);
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+void system_check()
+{
+  //check battery voltage every x-seconds
+  if(! battery_voltage_ok())
+  {
+    //send out last message COMMAND_TYPE_SHUTDOWN_BATTERY_EMPTY
+
+    //go to sleep forever
+    system_shutdown(); 
+  }
+
+  //check on/off switch or button
+  {
+    //send out last message COMMAND_TYPE_SHUTDOWN_USER
+  
+    //go to sleep
+    system_shutdown(); 
+  }
+  
+  
+}
+
+//////////////////////////////////////////////////////////////////////////////
+void system_shutdown()
+{
+  
+}
+
+//////////////////////////////////////////////////////////////////////////////
+bool battery_voltage_ok()
+{
+  return check_battery_voltage(PIN_ADC_BATTERY_MEASUREMENT, BATTERY_MIN_MV);
+}
 
 //////////////////////////////////////////////////////////////////////////////
 void go_to_sleep_ms(uint8_t ms_until_wakeup)
