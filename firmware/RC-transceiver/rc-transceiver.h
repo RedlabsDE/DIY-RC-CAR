@@ -5,6 +5,8 @@
 void setup_transmitter();
 void loop_transmitter();
 
+
+
 #define PIN_BUTTON_1 0 //<<< custom setting
 #define PIN_BUTTON_2 0 //<<< custom setting
 #define PIN_BUTTON_3 0 //<<< custom setting
@@ -14,6 +16,11 @@ void loop_transmitter();
 #define PIN_ADC_POTI_1 0 //<<< custom setting
 #define PIN_ADC_POTI_2 0 //<<< custom setting
 
+#define PIN_ENABLE_POWER 0 //<<< custom setting
+
+
+int pin_list_buttons[HMI_BUTTON_COUNT] = {PIN_BUTTON_1,PIN_BUTTON_2,PIN_BUTTON_3,PIN_BUTTON_4,PIN_BUTTON_5};
+int pin_list_adc_8bit[HMI_ANALOG_8BIT_COUNT] = {PIN_ADC_POTI_1,PIN_ADC_POTI_1};
 //////////////////////////////////////////////////////////////////////////////
 // Receiver specific code
 void setup_receiver();
@@ -34,8 +41,8 @@ void loop_receiver();
 #define SLEEP_TIME_MS 10
 void go_to_sleep_ms(uint8_t ms_until_wakeup); //go to sleep to save battery
 bool battery_voltage_ok();
-void system_shutdown();
-void system_check();
+void system_shutdown_transmitter();
+void system_check_transmitter();
 bool check_battery_voltage(int adc_pin, int min_usable_voltage_mv);
 
 
@@ -48,7 +55,7 @@ bool check_battery_voltage(int adc_pin);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
-void system_check()
+void system_check_transmitter()
 {
   //check battery voltage every x-seconds
   if(! battery_voltage_ok())
@@ -56,7 +63,7 @@ void system_check()
     //send out last message COMMAND_TYPE_SHUTDOWN_BATTERY_EMPTY
 
     //go to sleep forever
-    system_shutdown(); 
+    system_shutdown_transmitter(); 
   }
 
   //check on/off switch or button
@@ -64,18 +71,39 @@ void system_check()
     //send out last message COMMAND_TYPE_SHUTDOWN_USER
   
     //go to sleep
-    system_shutdown(); 
+    system_shutdown_transmitter(); 
   }
   
   
 }
 
 //////////////////////////////////////////////////////////////////////////////
-void system_shutdown()
+void system_shutdown_transmitter()
 {
+  //gpio de-init, set state with lowest power consumption
+  pinMode(PIN_ENABLE_POWER, INPUT_PULLUP);
   
 }
 
+void system_init_transmitter()
+{
+  //gpio init  
+  for(int buttonIndex = 0; buttonIndex<HMI_BUTTON_COUNT; buttonIndex++)
+  {
+    pinMode(pin_list_buttons[buttonIndex], INPUT_PULLUP);    
+  }
+  
+  pinMode(PIN_LED_STATUS, OUTPUT); 
+
+  pinMode(PIN_ENABLE_POWER, OUTPUT); 
+  digitalWrite(PIN_ENABLE_POWER, LOW);
+  
+  
+  
+  
+  //enable power for extern circuits (radio module, buttons, potentiometers, ...)
+  //set_extern_power_enable(true);
+}
 //////////////////////////////////////////////////////////////////////////////
 bool battery_voltage_ok()
 {

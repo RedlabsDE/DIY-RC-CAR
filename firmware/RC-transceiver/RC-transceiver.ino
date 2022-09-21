@@ -32,10 +32,9 @@
 #include <SPI.h>
 #include "RF24.h"
 
-#include "rc-transceiver.h"
 #include "rc_hmi.h" //user interface (buttons, ...)
 #include "rc_message_types.h"
-
+#include "rc-transceiver.h"
 
 /* Hardware configuration: Set up nRF24L01 radio on SPI bus plus pins 7 & 8 */
 RF24 radio(PIN_NRF_CE,PIN_NRF_CSN);
@@ -74,17 +73,14 @@ void setup_transmitter()
   //check battery voltage
   if(check_battery_voltage(PIN_ADC_BATTERY_MEASUREMENT, BATTERY_MIN_MV))
   {
-    //procceed if it is in range
+    //procceed if it is in range ...
+    system_init_transmitter();
   }
   else
   {  
     //go to sleep forever, start again only by (power-)reset
+    system_shutdown_transmitter();
   }
-  
-
-  //enable power for extern circuits (radio module, buttons, potentiometers, ...)
-  //set_extern_power_enable(true);
-  
 }
 void setup_receiver()
 {
@@ -106,7 +102,7 @@ void loop()
 void loop_transmitter()
 {
   //check battery and powerbutton state
-  system_check();
+  system_check_transmitter();
   
   //check if HMI data changed
   if(hmi_has_changed())
