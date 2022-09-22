@@ -40,6 +40,7 @@ struct RC_COMMAND
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//calculate sum over all bytes
 uint8_t rc_calculateSum(const uint8_t* pData, uint8_t len)
 {
     uint8_t res = 0;
@@ -50,4 +51,17 @@ uint8_t rc_calculateSum(const uint8_t* pData, uint8_t len)
         pData++;
     }
     return res;
+}
+//check if last byte (=CRC) equals the sum of all bytes except the last
+bool rc_check_crc(struct RC_COMMAND* p_command)
+{
+  uint8_t checksum = rc_calculateSum(((uint8_t*)p_command),  sizeof(*p_command) - 1); //calc sum over all bytes except the last
+  if(checksum == p_command->checksum)
+  {
+    return true;
+  }
+  else
+  {
+    return false;
+  }
 }

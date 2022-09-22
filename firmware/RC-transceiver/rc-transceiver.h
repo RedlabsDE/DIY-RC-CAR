@@ -7,20 +7,7 @@ void loop_transmitter();
 
 
 
-#define PIN_BUTTON_1 0 //<<< custom setting
-#define PIN_BUTTON_2 0 //<<< custom setting
-#define PIN_BUTTON_3 0 //<<< custom setting
-#define PIN_BUTTON_4 0 //<<< custom setting
-#define PIN_BUTTON_5 0 //<<< custom setting
 
-#define PIN_ADC_POTI_1 0 //<<< custom setting
-#define PIN_ADC_POTI_2 0 //<<< custom setting
-
-#define PIN_ENABLE_POWER 0 //<<< custom setting
-
-
-int pin_list_buttons[HMI_BUTTON_COUNT] = {PIN_BUTTON_1,PIN_BUTTON_2,PIN_BUTTON_3,PIN_BUTTON_4,PIN_BUTTON_5};
-int pin_list_adc_8bit[HMI_ANALOG_8BIT_COUNT] = {PIN_ADC_POTI_1,PIN_ADC_POTI_1};
 //////////////////////////////////////////////////////////////////////////////
 // Receiver specific code
 void setup_receiver();
@@ -30,12 +17,14 @@ void loop_receiver();
 //////////////////////////////////////////////////////////////////////////////
 // Common code
 
+
+
 #define PIN_NRF_CE  0 //<<< custom setting default
 #define PIN_NRF_CSN 0 //<<< custom setting default
 
 #define PIN_ADC_BATTERY_MEASUREMENT 0 //<<< custom setting default
 
-#define PIN_LED_STATUS 0 //<<< custom setting default
+#define PIN_LED_STATUS 13 //<<< custom setting default
 
 
 #define SLEEP_TIME_MS 10
@@ -71,7 +60,7 @@ void system_check_transmitter()
     //send out last message COMMAND_TYPE_SHUTDOWN_USER
   
     //go to sleep
-    system_shutdown_transmitter(); 
+    //system_shutdown_transmitter(); 
   }
   
   
@@ -94,25 +83,31 @@ void system_init_transmitter()
   }
   
   pinMode(PIN_LED_STATUS, OUTPUT); 
+  digitalWrite(PIN_LED_STATUS, HIGH); //Status LED ON
 
+  //enable power for extern circuits (radio module, buttons, potentiometers, ...)
   pinMode(PIN_ENABLE_POWER, OUTPUT); 
   digitalWrite(PIN_ENABLE_POWER, LOW);
-  
-  
-  
-  
-  //enable power for extern circuits (radio module, buttons, potentiometers, ...)
-  //set_extern_power_enable(true);
+
+
 }
 //////////////////////////////////////////////////////////////////////////////
 bool battery_voltage_ok()
 {
-  return check_battery_voltage(PIN_ADC_BATTERY_MEASUREMENT, BATTERY_MIN_MV);
+  #if (USE_BATTERY_MONITOR)
+    return check_battery_voltage(PIN_ADC_BATTERY_MEASUREMENT, BATTERY_MIN_MV);
+  #else
+    return true;
+  #endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
 void go_to_sleep_ms(uint8_t ms_until_wakeup)
 {
+
+  //debug: 
+  delay(1000);
+  
   //config and start wakeup source RTC
 
   //go to sleep...

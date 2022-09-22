@@ -26,6 +26,10 @@
 #define USED_TARGET TARGET_TRANSMITTER    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< select mode to download to your arduino
 
 //////////////////////////////////////////////////////////////////////////////
+//defines to customize the system
+#define DEBUG_REPLACE_RADIO_BY_SERIAL true
+#define USE_BATTERY_MONITOR false
+//////////////////////////////////////////////////////////////////////////////
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -51,12 +55,14 @@ void setup()
   //rx/tx specific setup
   #if(USED_TARGET == TARGET_TRANSMITTER)
     Serial.println("Start transmitter mode");
+    init_hmi_data();
     setup_transmitter();
   #else if( USED_TARGET == TARGET_RECEIVER)
     Serial.println("Start receiver mode");
     setup_receiver();
   #endif
 
+#if (DEBUG_REPLACE_RADIO_BY_SERIAL == false)
   //common setup
   radio.begin();
   radio.setAutoAck(1);                    // Ensure autoACK is enabled
@@ -67,10 +73,11 @@ void setup()
   //radio.openReadingPipe(1, pipes[0]);
   radio.startListening();                 // Start listening
   radio.printDetails();                   // Dump the configuration of the rf unit for debugging
+#endif
 
   //rx/tx specific setup
   #if(USED_TARGET == TARGET_TRANSMITTER)
-    //send out radio packet COMMAND_TYPE_STARTUP
+    //rc_send_command_type(COMMAND_TYPE_STARTUP);
   #else if( USED_TARGET == TARGET_RECEIVER)
 
   #endif
@@ -80,10 +87,10 @@ void setup()
 void setup_transmitter()
 {
   //check battery voltage
-  if(check_battery_voltage(PIN_ADC_BATTERY_MEASUREMENT, BATTERY_MIN_MV))
+  if(battery_voltage_ok())
   {
     //procceed if it is in range ...
-    system_init_transmitter();
+    system_init_transmitter();    
   }
   else
   {  
@@ -107,18 +114,24 @@ void loop()
   #endif
 }
 
+
 //////////////////////////////////////////////////////////////////////////////
 void loop_transmitter()
 {
+  
   //check battery and powerbutton state
-  system_check_transmitter();
+  //system_check_transmitter();
   
   //check if HMI data changed
   if(hmi_has_changed())
   {
     //send out last_hmi_data via radio
+    rc_send_command_type(COMMAND_TYPE_DATA_HMI);
   }
+  
 
+  digitalWrite(PIN_LED_STATUS, !digitalRead(PIN_LED_STATUS)); //toggle yellow LED while Alarm is present
+  
   go_to_sleep_ms(SLEEP_TIME_MS);
 }
 //////////////////////////////////////////////////////////////////////////////
@@ -126,7 +139,10 @@ void loop_receiver()
 {
   if( radio.available())
   {
-    
+    struct RC_COMMAND rc_command_received;
+    struct RC_COMMAND* p_command = &rc_command_received;
+    radio.read(p_command, sizeof(p_command));
+    rc_handle_received_data(p_command);   
   }
 
   //go_to_sleep_ms(SLEEP_TIME_MS);
@@ -135,8 +151,11 @@ void loop_receiver()
 
 
 
-void rc_send_command_type(enum RC_COMMAND_TYPE command_type, struct RC_HMI_DATA* hmi_data)
+void rc_send_command_type(enum RC_COMMAND_TYPE command_type)
 {
+  //increment by 1, for each sent packet
+  static uint8_t packetNumber = 0;
+  
   //create
   struct RC_COMMAND rc_command_to_send;
   struct RC_COMMAND* p_command = &rc_command_to_send;
@@ -146,11 +165,16 @@ void rc_send_command_type(enum RC_COMMAND_TYPE command_type, struct RC_HMI_DATA*
   p_command->command_identifier[1] = 'C';
   p_command->command_identifier[2] = 'C';
 
+  p_command->protocol_version = 0;
+  p_command->packet_number = packetNumber;
+  packetNumber++;
+  
   p_command->command_type = command_type;
 
-  if(command_type == COMMAND_TYPE_DATA_HMI) //fill data
+  if(command_type == COMMAND_TYPE_DATA_HMI) //fill data, if command type matches and data is available
   {
-    p_command->hmi_data = hmi_data[0]; //TODO test
+    struct RC_HMI_DATA* p_global_last_hmi_data = hmi_get_last_data();
+    memcpy(&p_command->hmi_data, p_global_last_hmi_data, sizeof(p_command->hmi_data));   
   }
 
   p_command->checksum = rc_calculateSum(((uint8_t*)p_command),  sizeof(*p_command) - 1);
@@ -160,21 +184,26 @@ void rc_send_command_type(enum RC_COMMAND_TYPE command_type, struct RC_HMI_DATA*
 
 }
 
-bool rc_handle_received_data()
+//TODO
+bool rc_handle_received_data(struct RC_COMMAND* p_command)
 {
   //create
-  struct RC_COMMAND rc_command_received;
-  struct RC_COMMAND* p_command = &rc_command_received;
+  //struct RC_COMMAND rc_command_received;
+  //struct RC_COMMAND* p_command = rc_command_received;
 
   //read
-  radio.read(p_command, sizeof(p_command));
+  //radio.read(p_command, sizeof(p_command));
 
   //check
-  uint8_t checksum = rc_calculateSum(((uint8_t*)p_command),  sizeof(*p_command) - 1);
-  if(checksum == p_command->checksum)
+  if(rc_check_crc(p_command))
   {
     //ok
-    //
+    //handle type and data
+    if(p_command->command_type == COMMAND_TYPE_DATA_HMI) //fill data
+    {
+      //handle new hmi data from RC      
+    }
+    //else if ...
 
     return true;
   }
@@ -185,11 +214,39 @@ bool rc_handle_received_data()
   
 }
 
+//////////////////////////////////////////////////////////////////////////////
 bool Nrf_TransmitData(struct RC_COMMAND* pPacket)
 {
+#if (DEBUG_REPLACE_RADIO_BY_SERIAL)
+    Serial.println();
+    Serial.print("TX payload: ");
+    
+    printStruct(((uint8_t*)pPacket),  sizeof(*pPacket));
+    return true;
+#else
   radio.stopListening(); 
   bool tx_success = radio.write(pPacket, sizeof(*pPacket) ); //auto ack will return true if packet was sent and received
   radio.startListening(); 
   
   return tx_success;
+#endif
+}
+
+void printStruct(const uint8_t* pData, uint8_t len)
+{
+    //Serial.println();
+    Serial.print(" Struct (");
+    Serial.print(len);
+    Serial.print("): ");
+    
+    
+    uint8_t res = 0;
+    const uint8_t* pEnd = pData + len;
+    while (pData != pEnd)
+    {
+        res = *pData;
+        Serial.print(res);
+        Serial.print(" ");        
+        pData++;
+    }
 }
