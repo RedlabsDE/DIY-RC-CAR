@@ -30,7 +30,9 @@
 
 //////////////////////////////////////////////////////////////////////////////
 #include <SPI.h>
+#include "nRF24L01.h"
 #include "RF24.h"
+#include "printf.h"
 
 #include "rc_hmi.h" //user interface (buttons, ...)
 #include "rc_message_types.h"
@@ -56,8 +58,15 @@ void setup()
   #endif
 
   //common setup
-  radio.begin(); //use default settings
-  radio.startListening();
+  radio.begin();
+  radio.setAutoAck(1);                    // Ensure autoACK is enabled
+  //radio.enableAckPayload();               // Allow optional ack payloads
+  radio.setRetries(0, 15);                // Smallest time between retries, max no. of retries
+  radio.setPayloadSize(1);                // Here we are sending 1-byte payloads to test the call-response speed
+  //radio.openWritingPipe(pipes[1]);        // Both radios listen on the same pipes by default, and switch when writing
+  //radio.openReadingPipe(1, pipes[0]);
+  radio.startListening();                 // Start listening
+  radio.printDetails();                   // Dump the configuration of the rf unit for debugging
 
   //rx/tx specific setup
   #if(USED_TARGET == TARGET_TRANSMITTER)
@@ -121,4 +130,66 @@ void loop_receiver()
   }
 
   //go_to_sleep_ms(SLEEP_TIME_MS);
+}
+
+
+
+
+void rc_send_command_type(enum RC_COMMAND_TYPE command_type, struct RC_HMI_DATA* hmi_data)
+{
+  //create
+  struct RC_COMMAND rc_command_to_send;
+  struct RC_COMMAND* p_command = &rc_command_to_send;
+
+  //prepare
+  p_command->command_identifier[0] = 'R';
+  p_command->command_identifier[1] = 'C';
+  p_command->command_identifier[2] = 'C';
+
+  p_command->command_type = command_type;
+
+  if(command_type == COMMAND_TYPE_DATA_HMI) //fill data
+  {
+    p_command->hmi_data = hmi_data[0]; //TODO test
+  }
+
+  p_command->checksum = rc_calculateSum(((uint8_t*)p_command),  sizeof(*p_command) - 1);
+
+  //send
+  Nrf_TransmitData(p_command);
+
+}
+
+bool rc_handle_received_data()
+{
+  //create
+  struct RC_COMMAND rc_command_received;
+  struct RC_COMMAND* p_command = &rc_command_received;
+
+  //read
+  radio.read(p_command, sizeof(p_command));
+
+  //check
+  uint8_t checksum = rc_calculateSum(((uint8_t*)p_command),  sizeof(*p_command) - 1);
+  if(checksum == p_command->checksum)
+  {
+    //ok
+    //
+
+    return true;
+  }
+  else
+  {
+    return false;
+  }
+  
+}
+
+bool Nrf_TransmitData(struct RC_COMMAND* pPacket)
+{
+  radio.stopListening(); 
+  bool tx_success = radio.write(pPacket, sizeof(*pPacket) ); //auto ack will return true if packet was sent and received
+  radio.startListening(); 
+  
+  return tx_success;
 }

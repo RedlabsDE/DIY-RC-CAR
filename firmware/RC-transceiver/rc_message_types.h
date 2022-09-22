@@ -1,3 +1,8 @@
+uint8_t rc_calculateSum(const uint8_t* pData, uint8_t len);
+
+
+
+
 enum RC_COMMAND_TYPE
 {
   COMMAND_TYPE_INVALID = 0,  
@@ -31,3 +36,18 @@ struct RC_COMMAND
     // Checksum over all previous bytes (simple sum over all bytes)
     uint8_t checksum;
 } __attribute__ ((packed, aligned(1)));
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+uint8_t rc_calculateSum(const uint8_t* pData, uint8_t len)
+{
+    uint8_t res = 0;
+    const uint8_t* pEnd = pData + len;
+    while (pData != pEnd)
+    {
+        res += *pData;
+        pData++;
+    }
+    return res;
+}
