@@ -2,11 +2,11 @@
 #define HMI_BUTTON_COUNT  5
 #define HMI_ANALOG_8BIT_COUNT 2
 
-#define PIN_BUTTON_1 0 //<<< custom setting
-#define PIN_BUTTON_2 1 //<<< custom setting
-#define PIN_BUTTON_3 2 //<<< custom setting
-#define PIN_BUTTON_4 3 //<<< custom setting
-#define PIN_BUTTON_5 4 //<<< custom setting
+#define PIN_BUTTON_1 2 //<<< custom setting
+#define PIN_BUTTON_2 3 //<<< custom setting
+#define PIN_BUTTON_3 4 //<<< custom setting
+#define PIN_BUTTON_4 5 //<<< custom setting
+#define PIN_BUTTON_5 6 //<<< custom setting
 
 #define PIN_ADC_POTI_1 0 //<<< custom setting
 #define PIN_ADC_POTI_2 1 //<<< custom setting
@@ -19,8 +19,8 @@ int pin_list_adc_8bit[HMI_ANALOG_8BIT_COUNT] = {PIN_ADC_POTI_1,PIN_ADC_POTI_1};
 
 enum BUTTON_STATE
 {
-  BS_INVALID = -1,
-  BS_NOT_PRESSED = 0,
+  BS_INVALID = 0,
+  BS_NOT_PRESSED,
   BS_PRESSED,
   BS_REPEATED,
   BS_LONG_PRESS,
@@ -31,7 +31,8 @@ enum BUTTON_STATE
 
 struct RC_HMI_DATA
 {
-    enum BUTTON_STATE button_state[HMI_BUTTON_COUNT];
+    //enum BUTTON_STATE button_state[HMI_BUTTON_COUNT];
+    uint8_t button_state[HMI_BUTTON_COUNT];
     uint8_t analog_values[HMI_ANALOG_8BIT_COUNT];  
 }__attribute__ ((packed, aligned(1)));
 
@@ -56,30 +57,40 @@ void printStruct2(const uint8_t* pData, uint8_t len)
         pData++;
     }
 }
+struct RC_HMI_DATA* hmi_get_last_data()
+{
+    return &global_last_hmi_data;
+}
+
+void hmi_set_last_data(struct RC_HMI_DATA* new_hmi_data)
+{
+  memcpy(&global_last_hmi_data, new_hmi_data, sizeof(*new_hmi_data));
+}
+
 
 //read and return all hmi states (buttons, potis, ...)
 void hmi_read_current_data(struct RC_HMI_DATA* current_hmi_data)
 {
-  
+  struct RC_HMI_DATA* p_last_hmi_data = hmi_get_last_data();
   
   //Buttons
   for(int buttonIndex = 0; buttonIndex<HMI_BUTTON_COUNT; buttonIndex++)
   {  
     //read pin state
     uint8_t pinState = digitalRead(pin_list_buttons[buttonIndex]);
-    pinState = 1; //debug
-
-    enum BUTTON_STATE newState = BS_INVALID;
+    //pinState = 1; //debug
+    uint8_t newState = BS_INVALID;
     
-    if(pinState) //high: no press
+    if(pinState == 1) //high: no press
     {
       newState = BS_NOT_PRESSED;
     }
     else
     {
       //low: pressed
-      switch(current_hmi_data->button_state[buttonIndex])
+      switch(p_last_hmi_data->button_state[buttonIndex])
       {
+        case BS_INVALID:
         case BS_NOT_PRESSED:
           newState = BS_PRESSED;
           break;
@@ -87,6 +98,7 @@ void hmi_read_current_data(struct RC_HMI_DATA* current_hmi_data)
           newState = BS_REPEATED;
           break;
         case BS_REPEATED:
+            newState = BS_REPEATED;
           //TODO: add timer/counter to set BS_LONG_PRESS
           break;
         default:
@@ -105,8 +117,8 @@ void hmi_read_current_data(struct RC_HMI_DATA* current_hmi_data)
     uint8_t newAdc = analogRead(pin_list_adc_8bit[adcIndex]);
     //TODO add hystersis    
 
-    newAdc = fooCounter; //debug
-    fooCounter++;
+    //newAdc = fooCounter; //debug
+    //fooCounter++; //debug
     
     current_hmi_data->analog_values[adcIndex] = newAdc;
   }
@@ -115,15 +127,7 @@ void hmi_read_current_data(struct RC_HMI_DATA* current_hmi_data)
     
 }
 
-struct RC_HMI_DATA* hmi_get_last_data()
-{
-    return &global_last_hmi_data;
-}
 
-void hmi_set_last_data(struct RC_HMI_DATA* new_hmi_data)
-{
-  memcpy(&global_last_hmi_data, new_hmi_data, sizeof(*new_hmi_data));
-}
 
 //global last_hmi_data
 bool hmi_has_changed()
