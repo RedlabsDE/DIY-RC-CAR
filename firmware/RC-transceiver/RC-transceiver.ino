@@ -27,12 +27,20 @@
 
 //////////////////////////////////////////////////////////////////////////////
 //defines to customize the system
+#define DEBUG true //used for debug serial output
 #define DEBUG_REPLACE_RADIO_BY_SERIAL true
 #define USE_BATTERY_MONITOR false
 //////////////////////////////////////////////////////////////////////////////
 
 
 //////////////////////////////////////////////////////////////////////////////
+
+#ifdef __AVR__
+  #include <avr/power.h>
+#endif
+
+#include <avr/sleep.h>
+
 #include <SPI.h>
 #include "nRF24L01.h"
 #include "RF24.h"
@@ -122,10 +130,9 @@ void loop()
 
 //////////////////////////////////////////////////////////////////////////////
 void loop_transmitter()
-{
-  
+{  
   //check battery and powerbutton state
-  //system_check_transmitter();
+  system_check_transmitter();
   
   //check if HMI data changed
   if(hmi_has_changed())
@@ -134,10 +141,9 @@ void loop_transmitter()
     rc_send_command_type(COMMAND_TYPE_DATA_HMI);
   }
   
-
-  digitalWrite(PIN_LED_STATUS, !digitalRead(PIN_LED_STATUS)); //toggle yellow LED while Alarm is present
+  digitalWrite(PIN_LED_STATUS, !digitalRead(PIN_LED_STATUS));   //TODO: debug toggle yellow LED while Alarm is present
   
-  go_to_sleep_ms(SLEEP_TIME_MS);
+  GO_TO_SLEEP(true); //sleep some time to save energy
 }
 //////////////////////////////////////////////////////////////////////////////
 void loop_receiver()
@@ -151,44 +157,13 @@ void loop_receiver()
     rc_handle_received_data(p_command);   
   }
 
-  //go_to_sleep_ms(SLEEP_TIME_MS);
+  GO_TO_SLEEP(true); //sleep some time to save energy
 }
 
 
 
 
-void rc_send_command_type(enum RC_COMMAND_TYPE command_type)
-{
-  //increment by 1, for each sent packet
-  static uint8_t packetNumber = 0;
-  
-  //create
-  struct RC_COMMAND rc_command_to_send;
-  struct RC_COMMAND* p_command = &rc_command_to_send;
 
-  //prepare
-  p_command->command_identifier[0] = 'R';
-  p_command->command_identifier[1] = 'C';
-  p_command->command_identifier[2] = 'C';
-
-  p_command->protocol_version = 0;
-  p_command->packet_number = packetNumber;
-  packetNumber++;
-  
-  p_command->command_type = command_type;
-
-  if(command_type == COMMAND_TYPE_DATA_HMI) //fill data, if command type matches and data is available
-  {
-    struct RC_HMI_DATA* p_global_last_hmi_data = hmi_get_last_data();
-    memcpy(&p_command->hmi_data, p_global_last_hmi_data, sizeof(p_command->hmi_data));   
-  }
-
-  p_command->checksum = rc_calculateSum(((uint8_t*)p_command),  sizeof(*p_command) - 1);
-
-  //send
-  Nrf_TransmitData(p_command);
-
-}
 
 //TODO
 bool rc_handle_received_data(struct RC_COMMAND* p_command)
@@ -232,39 +207,8 @@ void servo1_set_position_from_adc(uint8_t adcValue)
       myservo1.write(newServoPosition);
 }
 
-//////////////////////////////////////////////////////////////////////////////
-bool Nrf_TransmitData(struct RC_COMMAND* pPacket)
-{
-#if (DEBUG_REPLACE_RADIO_BY_SERIAL)
-    Serial.println();
-    Serial.print("TX payload: ");
-    
-    printStruct(((uint8_t*)pPacket),  sizeof(*pPacket));
-    return true;
-#else
-  radio.stopListening(); 
-  bool tx_success = radio.write(pPacket, sizeof(*pPacket) ); //auto ack will return true if packet was sent and received
-  radio.startListening(); 
-  
-  return tx_success;
-#endif
-}
 
-void printStruct(const uint8_t* pData, uint8_t len)
-{
-    //Serial.println();
-    Serial.print(" Struct (");
-    Serial.print(len);
-    Serial.print("): ");
-    
-    
-    uint8_t res = 0;
-    const uint8_t* pEnd = pData + len;
-    while (pData != pEnd)
-    {
-        res = *pData;
-        Serial.print(res);
-        Serial.print(" ");        
-        pData++;
-    }
-}
+
+
+
+

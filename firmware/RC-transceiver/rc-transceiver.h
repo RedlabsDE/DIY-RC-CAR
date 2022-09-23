@@ -25,16 +25,25 @@ void servo_set_position_from_adc(uint8_t adcValue);
 
 #define PIN_ADC_BATTERY_MEASUREMENT 0 //<<< custom setting default
 
+#define PIN_ENABLE_POWER 0 //<<< custom setting
+#define SUPPLY_SWITCH_ENABLE   digitalWrite(PIN_ENABLE_POWER, LOW)
+#define SUPPLY_SWITCH_DISABLE  digitalWrite(PIN_ENABLE_POWER, HIGH)
+
 #define PIN_LED_STATUS 13 //<<< custom setting default
 
 
 #define SLEEP_TIME_MS 10
-void go_to_sleep_ms(uint8_t ms_until_wakeup); //go to sleep to save battery
 bool battery_voltage_ok();
 void system_shutdown_transmitter();
 void system_check_transmitter();
 bool check_battery_voltage(int adc_pin, int min_usable_voltage_mv);
+int CalculateVoltage(int adcValue);
+void GO_TO_SLEEP(bool enableWakeup); //go to sleep to save battery
 
+bool Nrf_TransmitData(struct RC_COMMAND* pPacket);
+void rc_send_command_type(enum RC_COMMAND_TYPE command_type);
+
+void printStruct(const uint8_t* pData, uint8_t len);
 
 // Battery Voltage Measurement
 #define BATTERY_CELL_COUNT  3   //<<< custom setting
@@ -50,10 +59,9 @@ void system_check_transmitter()
   //check battery voltage every x-seconds
   if(! battery_voltage_ok())
   {
-    //send out last message COMMAND_TYPE_SHUTDOWN_BATTERY_EMPTY
-
-    //go to sleep forever
-    system_shutdown_transmitter(); 
+    rc_send_command_type(COMMAND_TYPE_SHUTDOWN_BATTERY_EMPTY); //send out last message
+    
+    system_shutdown_transmitter(); //go to sleep forever, wakeup only by mcu reset
   }
 
   //check on/off switch or button
@@ -71,7 +79,9 @@ void system_check_transmitter()
 void system_shutdown_transmitter()
 {
   //gpio de-init, set state with lowest power consumption
-  pinMode(PIN_ENABLE_POWER, INPUT_PULLUP);
+  //pinMode(PIN_ENABLE_POWER, INPUT_PULLUP);
+
+  GO_TO_SLEEP(false); //disable everything that draws current, and go to sleep without option to wake up
   
 }
 
@@ -88,7 +98,7 @@ void system_init_transmitter()
 
   //enable power for extern circuits (radio module, buttons, potentiometers, ...)
   pinMode(PIN_ENABLE_POWER, OUTPUT); 
-  digitalWrite(PIN_ENABLE_POWER, LOW);
+  SUPPLY_SWITCH_ENABLE;
 
 
 }
@@ -103,28 +113,14 @@ bool battery_voltage_ok()
 }
 
 //////////////////////////////////////////////////////////////////////////////
-void go_to_sleep_ms(uint8_t ms_until_wakeup)
-{
-
-  //debug: 
-  delay(100);
-  
-  //config and start wakeup source RTC
-
-  //go to sleep...
-  
-
-  //...wakeup
-
-}
-
-//////////////////////////////////////////////////////////////////////////////
 bool check_battery_voltage(int adc_pin, int min_usable_voltage_mv)
 {
   bool battery_voltage_ok = false;
   int adc_sum = 0;
   int adc_val = 0;
 
+  // use intern 1.1V ADC reference voltage
+  analogReference(INTERNAL);
   //read adc
   for(int i=0;i<10;i++)
   {
@@ -132,10 +128,7 @@ bool check_battery_voltage(int adc_pin, int min_usable_voltage_mv)
   }
   adc_val = adc_sum/10;
 
-  //calc and check voltage
-  //ADC reference: internal 1.1V
-  //voltage divider (battery)-|10k|-(ADC)-|1k|-(GND)
-  int measured_battery_voltage_mv = 0; //TODO 
+  int measured_battery_voltage_mv = CalculateVoltage(adc_val);
 
   if(measured_battery_voltage_mv > min_usable_voltage_mv)
   {
@@ -143,4 +136,162 @@ bool check_battery_voltage(int adc_pin, int min_usable_voltage_mv)
   }
   
   return battery_voltage_ok;
+}
+
+/************************************************************************************************************************************************/
+/* ADC -> Voltage calculation
+/************************************************************************************************************************************************/
+/* Calculate Battery Voltage in mV from ADC raw data
+
+   Vref: 1.1V (intern)
+   R_up:    10k
+   R_down:  1k
+
+   Vbat 0...10V (normal operation range 4...6V)
+   Vpin 0...1V
+
+   21.12.2020
+   Calibration point #1: 6000 mV = 507 ADC (measured)
+   Calibration point #2: 4000 mV = 332 ADC (measured)
+
+   slope = (V_CAL_#1 - V_CAL_#2) / (ADC_CAL_#1 - ADC_CAL_#2)
+   offset = (slope * ADC_CAL_#1) - V_CAL_#1
+*/
+int CalculateVoltage(int adcValue)
+{
+  int voltage_mV;
+
+  // set slope & offset of the ADC transfer function
+  float slope = (6000.0 - 4000.0) / (507.0 - 332.0); //10bit ADC, 10V range //2000/(175) = 11,42857
+  float offset = -205.714;
+
+  voltage_mV = slope * adcValue - offset;
+
+#if DEBUG
+/*
+  //use adc output for calibration
+  Serial.print("ADC: ");
+  Serial.print(adcValue);
+  Serial.print(" Vbat: ");
+  Serial.print(voltage_mV);
+  Serial.println();
+  */  
+#endif
+
+  return voltage_mV;
+}
+
+
+/************************************************************************************************************************************************/
+/** Set MCU to sleep mode
+
+    @param bool enableWakeup - (true): use timer to wake up (false): no option to wake up mcu, only by reset
+    @return /
+*/
+/************************************************************************************************************************************************/
+void GO_TO_SLEEP(bool enableWakeup)
+{
+  #if DEBUG
+    Serial.write(" go to sleep ... ");
+
+    if(!enableWakeup)
+    {
+      Serial.write(" ...forever... ");
+    }
+
+    Serial.end();
+  #endif 
+  
+  if (enableWakeup) // normal sleep - use RTC timer to wake up MCU
+  {    
+    //TODO: attachInterrupt
+    //https://www.makerguides.com/how-do-i-wake-up-my-arduino-from-sleep-mode/
+
+    //TODO: use stupid delay, until wakeup is done via timer interrupt
+    delay(SLEEP_TIME_MS); // important delay!
+  }
+  else // sleep because battery is empty - no option to wake up again
+  {
+    SUPPLY_SWITCH_DISABLE;  
+
+    sleep_enable();
+    delay(10); // important delay!
+    set_sleep_mode(SLEEP_MODE_PWR_DOWN); //set full sleep mode
+    sleep_cpu(); // got to sleep ...
+  }
+
+
+
+}
+
+//////////////////////////////////////////////////////////////////////////////
+bool Nrf_TransmitData(struct RC_COMMAND* pPacket)
+{
+#if (DEBUG_REPLACE_RADIO_BY_SERIAL)
+    Serial.println();
+    Serial.print("TX payload: ");
+    
+    printStruct(((uint8_t*)pPacket),  sizeof(*pPacket));
+    return true;
+#else
+  radio.stopListening(); 
+  bool tx_success = radio.write(pPacket, sizeof(*pPacket) ); //auto ack will return true if packet was sent and received
+  radio.startListening(); 
+  
+  return tx_success;
+#endif
+}
+
+void rc_send_command_type(enum RC_COMMAND_TYPE command_type)
+{
+  //increment by 1, for each sent packet
+  static uint8_t packetNumber = 0;
+  
+  //create
+  struct RC_COMMAND rc_command_to_send;
+  struct RC_COMMAND* p_command = &rc_command_to_send;
+
+  //prepare
+  p_command->command_identifier[0] = 'R';
+  p_command->command_identifier[1] = 'C';
+  p_command->command_identifier[2] = 'C';
+
+  p_command->protocol_version = 0;
+  p_command->packet_number = packetNumber;
+  packetNumber++;
+  
+  p_command->command_type = command_type;
+
+  if(command_type == COMMAND_TYPE_DATA_HMI) //fill data, if command type matches and data is available
+  {
+    struct RC_HMI_DATA* p_global_last_hmi_data = hmi_get_last_data();
+    memcpy(&p_command->hmi_data, p_global_last_hmi_data, sizeof(p_command->hmi_data));   
+  }
+
+  p_command->checksum = rc_calculateSum(((uint8_t*)p_command),  sizeof(*p_command) - 1);
+
+  //send
+  Nrf_TransmitData(p_command);
+
+}
+
+
+//debug: serial output of a struct
+void printStruct(const uint8_t* pData, uint8_t len)
+{
+    //Serial.println();
+    Serial.print(" Struct (");
+    Serial.print(len);
+    Serial.print("): ");
+    
+    
+    uint8_t res = 0;
+    const uint8_t* pEnd = pData + len;
+    while (pData != pEnd)
+    {
+        res = *pData;
+        Serial.print(res);
+        Serial.print(" ");        
+        pData++;
+    }
 }

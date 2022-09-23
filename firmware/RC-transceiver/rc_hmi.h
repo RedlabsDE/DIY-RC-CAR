@@ -13,7 +13,7 @@
 #define PIN_ADC_POTI_1 0 //<<< custom setting
 #define PIN_ADC_POTI_2 1 //<<< custom setting
 
-#define PIN_ENABLE_POWER 0 //<<< custom setting
+
 
 #define PIN_SERVO_1 9
 
