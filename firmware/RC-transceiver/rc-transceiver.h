@@ -64,15 +64,13 @@ void system_check_transmitter()
     system_shutdown_transmitter(); //go to sleep forever, wakeup only by mcu reset
   }
 
-  //check on/off switch or button
+  bool user_turn_off = false;
+  //TODO check on/off switch or button
+  if(user_turn_off)
   {
-    //send out last message COMMAND_TYPE_SHUTDOWN_USER
-  
-    //go to sleep
-    //system_shutdown_transmitter(); 
+    rc_send_command_type(COMMAND_TYPE_SHUTDOWN_USER); //send out last message
+    system_shutdown_transmitter(); //go to sleep forever, wakeup only by mcu reset
   }
-  
-  
 }
 
 //////////////////////////////////////////////////////////////////////////////

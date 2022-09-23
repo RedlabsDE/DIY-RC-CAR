@@ -71,6 +71,16 @@ void hmi_set_last_data(struct RC_HMI_DATA* new_hmi_data)
   memcpy(&global_last_hmi_data, new_hmi_data, sizeof(*new_hmi_data));
 }
 
+// Do ADC sampling and mean calculation
+int get_averaged_Adc(int adcPin)
+{
+  int adcVal = 0;
+  for (int i = 0; i < 10; i++)
+  {
+    adcVal += analogRead(adcPin);
+  }
+  adcVal = adcVal / 10;
+}
 
 //read and return all hmi states (buttons, potis, ...)
 void hmi_read_current_data(struct RC_HMI_DATA* current_hmi_data)
@@ -116,9 +126,13 @@ void hmi_read_current_data(struct RC_HMI_DATA* current_hmi_data)
   static uint8_t fooCounter = 0;
 
   //ADC
+  // use external ADC reference voltage
+  // if (swichted-) supply voltage of potentiometers is connected to AREF, max poti position will result in max adc value. Independent of actual voltage level of supply.
+  analogReference(EXTERNAL);
+  
   for(int adcIndex = 0; adcIndex<HMI_ANALOG_8BIT_COUNT; adcIndex++)
   { 
-    int newAdc = analogRead(pin_list_adc_8bit[adcIndex]);
+    int newAdc = get_averaged_Adc(pin_list_adc_8bit[adcIndex]);
     //apply hystersis    
     int diff = abs(p_last_hmi_data->analog_values[adcIndex] - newAdc);
     if(diff > ADC_HYSTERESIS_COUNTS)
@@ -130,6 +144,7 @@ void hmi_read_current_data(struct RC_HMI_DATA* current_hmi_data)
   //printStruct2(((uint8_t*)current_hmi_data),  sizeof(*current_hmi_data)); //debug
     
 }
+
 
 
 
