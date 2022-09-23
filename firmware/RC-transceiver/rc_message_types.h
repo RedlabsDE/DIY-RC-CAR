@@ -16,7 +16,7 @@ enum RC_COMMAND_TYPE
 
 //size of struct must be 32 Byte ??
 //packet sent out by remote control
-struct RC_COMMAND
+struct RC_COMMAND 
 {
     // set to "RCC"
     char command_identifier[3];
@@ -38,7 +38,7 @@ struct RC_COMMAND
 } __attribute__ ((packed, aligned(1)));
 
 
-
+#define RC_COMMAND_PAYLOAD_SIZE sizeof(struct RC_COMMAND)
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //calculate sum over all bytes
 uint8_t rc_calculateSum(const uint8_t* pData, uint8_t len)

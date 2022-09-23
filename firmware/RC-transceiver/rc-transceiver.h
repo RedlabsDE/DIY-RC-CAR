@@ -13,6 +13,7 @@ void loop_transmitter();
 void setup_receiver();
 void loop_receiver();
 
+void servo_set_position_from_adc(uint8_t adcValue);
 
 //////////////////////////////////////////////////////////////////////////////
 // Common code
@@ -106,7 +107,7 @@ void go_to_sleep_ms(uint8_t ms_until_wakeup)
 {
 
   //debug: 
-  delay(1000);
+  delay(100);
   
   //config and start wakeup source RTC
 

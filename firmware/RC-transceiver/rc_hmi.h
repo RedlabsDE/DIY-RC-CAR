@@ -2,6 +2,8 @@
 #define HMI_BUTTON_COUNT  5
 #define HMI_ANALOG_8BIT_COUNT 2
 
+#define ADC_HYSTERESIS_COUNTS 5 //a change of ADC measured counts (compared to last saved value) below this value will be dismissed
+
 #define PIN_BUTTON_1 2 //<<< custom setting
 #define PIN_BUTTON_2 3 //<<< custom setting
 #define PIN_BUTTON_3 4 //<<< custom setting
@@ -12,6 +14,8 @@
 #define PIN_ADC_POTI_2 1 //<<< custom setting
 
 #define PIN_ENABLE_POWER 0 //<<< custom setting
+
+#define PIN_SERVO_1 9
 
 
 int pin_list_buttons[HMI_BUTTON_COUNT] = {PIN_BUTTON_1,PIN_BUTTON_2,PIN_BUTTON_3,PIN_BUTTON_4,PIN_BUTTON_5};
@@ -114,13 +118,13 @@ void hmi_read_current_data(struct RC_HMI_DATA* current_hmi_data)
   //ADC
   for(int adcIndex = 0; adcIndex<HMI_ANALOG_8BIT_COUNT; adcIndex++)
   { 
-    uint8_t newAdc = analogRead(pin_list_adc_8bit[adcIndex]);
-    //TODO add hystersis    
-
-    //newAdc = fooCounter; //debug
-    //fooCounter++; //debug
-    
-    current_hmi_data->analog_values[adcIndex] = newAdc;
+    int newAdc = analogRead(pin_list_adc_8bit[adcIndex]);
+    //apply hystersis    
+    int diff = abs(p_last_hmi_data->analog_values[adcIndex] - newAdc);
+    if(diff > ADC_HYSTERESIS_COUNTS)
+    {
+      current_hmi_data->analog_values[adcIndex] = map(newAdc,0,1023,0,255);
+    } 
   }
 
   //printStruct2(((uint8_t*)current_hmi_data),  sizeof(*current_hmi_data)); //debug

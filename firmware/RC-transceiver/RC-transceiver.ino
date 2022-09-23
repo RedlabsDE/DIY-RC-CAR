@@ -38,6 +38,9 @@
 #include "RF24.h"
 #include "printf.h"
 
+#include <Servo.h>
+Servo myservo1;  // create servo object to control a servo
+
 #include "rc_hmi.h" //user interface (buttons, ...)
 #include "rc_message_types.h"
 #include "rc-transceiver.h"
@@ -68,7 +71,7 @@ void setup()
   radio.setAutoAck(1);                    // Ensure autoACK is enabled
   //radio.enableAckPayload();               // Allow optional ack payloads
   radio.setRetries(0, 15);                // Smallest time between retries, max no. of retries
-  radio.setPayloadSize(1);                // Here we are sending 1-byte payloads to test the call-response speed
+  radio.setPayloadSize();                // Here we are sending 1-byte payloads to test the call-response speed
   //radio.openWritingPipe(pipes[1]);        // Both radios listen on the same pipes by default, and switch when writing
   //radio.openReadingPipe(1, pipes[0]);
   radio.startListening();                 // Start listening
@@ -100,6 +103,8 @@ void setup_transmitter()
 }
 void setup_receiver()
 {
+  myservo1.attach(PIN_SERVO_1);  // attaches the servo on pin x to the servo object
+  myservo1.write(180/2); //move to mid position
   
 }
 
@@ -141,6 +146,7 @@ void loop_receiver()
   {
     struct RC_COMMAND rc_command_received;
     struct RC_COMMAND* p_command = &rc_command_received;
+
     radio.read(p_command, sizeof(p_command));
     rc_handle_received_data(p_command);   
   }
@@ -187,21 +193,17 @@ void rc_send_command_type(enum RC_COMMAND_TYPE command_type)
 //TODO
 bool rc_handle_received_data(struct RC_COMMAND* p_command)
 {
-  //create
-  //struct RC_COMMAND rc_command_received;
-  //struct RC_COMMAND* p_command = rc_command_received;
-
-  //read
-  //radio.read(p_command, sizeof(p_command));
-
   //check
   if(rc_check_crc(p_command))
   {
-    //ok
     //handle type and data
-    if(p_command->command_type == COMMAND_TYPE_DATA_HMI) //fill data
+    if(p_command->command_type == COMMAND_TYPE_DATA_HMI)
     {
-      //handle new hmi data from RC      
+      //Servo  
+      servo1_set_position_from_adc(p_command->hmi_data.analog_values[0]);
+
+      //DC Motor
+      //TODO
     }
     //else if ...
 
@@ -212,6 +214,22 @@ bool rc_handle_received_data(struct RC_COMMAND* p_command)
     return false;
   }
   
+}
+
+// Use analog value of potentiometer (0...255) to set servo position
+void servo1_set_position_from_adc(uint8_t adcValue)
+{
+      int newServoPosition = map(adcValue,0,255,0,180);// scale it to use it with the servo (value between 0 and 180)
+      
+      //apply range for driving straight ahead
+      int midPosition = 180/2;
+      int distanceToMid = abs(newServoPosition-midPosition);
+      if(distanceToMid < 10)
+      {
+        newServoPosition = midPosition;
+      }
+
+      myservo1.write(newServoPosition);
 }
 
 //////////////////////////////////////////////////////////////////////////////
