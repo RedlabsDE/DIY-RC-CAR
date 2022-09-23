@@ -8,7 +8,7 @@
 /// \par        Editor
 ///             Arduino IDE
 /// \par        Board
-///             Arduino Nano
+///             Arduino Pro or Pro Mini
 /// \par        Prozessor
 ///             ATMega32
 /// \par        COM Port Setting (debug)
@@ -101,7 +101,9 @@ void setup_transmitter()
   if(battery_voltage_ok())
   {
     //procceed if it is in range ...
-    system_init_transmitter();    
+    system_init_transmitter();  
+
+    setup_receiver(); //DEBUG test  
   }
   else
   {  
@@ -112,8 +114,7 @@ void setup_transmitter()
 void setup_receiver()
 {
   myservo1.attach(PIN_SERVO_1);  // attaches the servo on pin x to the servo object
-  myservo1.write(180/2); //move to mid position
-  
+  myservo1.write(180/2); //move to mid position  
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -132,7 +133,7 @@ void loop()
 void loop_transmitter()
 {  
   //check battery and powerbutton state
-  system_check_transmitter();
+  //system_check_transmitter();
   
   //check if HMI data changed
   if(hmi_has_changed())
@@ -143,7 +144,8 @@ void loop_transmitter()
   
   digitalWrite(PIN_LED_STATUS, !digitalRead(PIN_LED_STATUS));   //TODO: debug toggle yellow LED while Alarm is present
   
-  GO_TO_SLEEP(true); //sleep some time to save energy
+  //GO_TO_SLEEP(true); //sleep some time to save energy
+  _delay_ms(10);
 }
 //////////////////////////////////////////////////////////////////////////////
 void loop_receiver()
@@ -165,47 +167,7 @@ void loop_receiver()
 
 
 
-//TODO
-bool rc_handle_received_data(struct RC_COMMAND* p_command)
-{
-  //check
-  if(rc_check_crc(p_command))
-  {
-    //handle type and data
-    if(p_command->command_type == COMMAND_TYPE_DATA_HMI)
-    {
-      //Servo  
-      servo1_set_position_from_adc(p_command->hmi_data.analog_values[0]);
 
-      //DC Motor
-      //TODO
-    }
-    //else if ...
-
-    return true;
-  }
-  else
-  {
-    return false;
-  }
-  
-}
-
-// Use analog value of potentiometer (0...255) to set servo position
-void servo1_set_position_from_adc(uint8_t adcValue)
-{
-      int newServoPosition = map(adcValue,0,255,0,180);// scale it to use it with the servo (value between 0 and 180)
-      
-      //apply range for driving straight ahead
-      int midPosition = 180/2;
-      int distanceToMid = abs(newServoPosition-midPosition);
-      if(distanceToMid < 10)
-      {
-        newServoPosition = midPosition;
-      }
-
-      myservo1.write(newServoPosition);
-}
 
 
 

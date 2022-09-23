@@ -32,7 +32,7 @@ void servo_set_position_from_adc(uint8_t adcValue);
 #define PIN_LED_STATUS 13 //<<< custom setting default
 
 
-#define SLEEP_TIME_MS 10
+#define SLEEP_TIME_MS 200
 bool battery_voltage_ok();
 void system_shutdown_transmitter();
 void system_check_transmitter();
@@ -44,6 +44,9 @@ bool Nrf_TransmitData(struct RC_COMMAND* pPacket);
 void rc_send_command_type(enum RC_COMMAND_TYPE command_type);
 
 void printStruct(const uint8_t* pData, uint8_t len);
+
+void servo1_set_position_from_adc(uint8_t adcValue);
+bool rc_handle_received_data(struct RC_COMMAND* p_command);
 
 // Battery Voltage Measurement
 #define BATTERY_CELL_COUNT  3   //<<< custom setting
@@ -271,6 +274,9 @@ void rc_send_command_type(enum RC_COMMAND_TYPE command_type)
   //send
   Nrf_TransmitData(p_command);
 
+  rc_handle_received_data(p_command); //TODO debug
+  
+
 }
 
 
@@ -292,4 +298,50 @@ void printStruct(const uint8_t* pData, uint8_t len)
         Serial.print(" ");        
         pData++;
     }
+}
+
+
+//TODO
+bool rc_handle_received_data(struct RC_COMMAND* p_command)
+{
+  //check
+  if(rc_check_crc(p_command))
+  {
+    //handle type and data
+    if(p_command->command_type == COMMAND_TYPE_DATA_HMI)
+    {
+      //Servo  
+      servo1_set_position_from_adc(p_command->hmi_data.analog_values[0]);
+
+      //DC Motor
+      //TODO
+    }
+    //else if ...
+
+    return true;
+  }
+  else
+  {
+    return false;
+  }
+  
+}
+
+// Use analog value of potentiometer (0...255) to set servo position
+void servo1_set_position_from_adc(uint8_t adcValue)
+{
+      int newServoPosition = map(adcValue,0,255,0,180);// scale it to use it with the servo (value between 0 and 180)
+      
+      //apply range for driving straight ahead
+      int midPosition = 180/2;
+      int distanceToMid = abs(newServoPosition-midPosition);
+      if(distanceToMid < 5)
+      {
+        newServoPosition = midPosition;
+      }
+      else
+      {
+        myservo1.write(newServoPosition);
+        delay(10); //TODO test: give servo some time
+      }
 }
