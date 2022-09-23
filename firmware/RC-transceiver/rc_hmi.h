@@ -6,9 +6,9 @@
 
 #define PIN_BUTTON_1 2 //<<< custom setting
 #define PIN_BUTTON_2 3 //<<< custom setting
-#define PIN_BUTTON_3 4 //<<< custom setting
-#define PIN_BUTTON_4 5 //<<< custom setting
-#define PIN_BUTTON_5 6 //<<< custom setting
+#define PIN_BUTTON_3 3 //<<< custom setting
+#define PIN_BUTTON_4 3 //<<< custom setting
+#define PIN_BUTTON_5 3 //<<< custom setting
 
 #define PIN_ADC_POTI_1 0 //<<< custom setting
 #define PIN_ADC_POTI_2 1 //<<< custom setting

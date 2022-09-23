@@ -20,8 +20,7 @@ void servo_set_position_from_adc(uint8_t adcValue);
 
 
 
-#define PIN_NRF_CE  0 //<<< custom setting default
-#define PIN_NRF_CSN 0 //<<< custom setting default
+
 
 #define PIN_ADC_BATTERY_MEASUREMENT 0 //<<< custom setting default
 
@@ -29,7 +28,7 @@ void servo_set_position_from_adc(uint8_t adcValue);
 #define SUPPLY_SWITCH_ENABLE   digitalWrite(PIN_ENABLE_POWER, LOW)
 #define SUPPLY_SWITCH_DISABLE  digitalWrite(PIN_ENABLE_POWER, HIGH)
 
-#define PIN_LED_STATUS 13 //<<< custom setting default
+#define PIN_LED_STATUS 9 //<<< custom setting default
 
 
 #define SLEEP_TIME_MS 200
@@ -233,11 +232,20 @@ bool Nrf_TransmitData(struct RC_COMMAND* pPacket)
     Serial.print("TX payload: ");
     
     printStruct(((uint8_t*)pPacket),  sizeof(*pPacket));
-    return true;
-#else
+    //return true;
+//#else
   radio.stopListening(); 
   bool tx_success = radio.write(pPacket, sizeof(*pPacket) ); //auto ack will return true if packet was sent and received
   radio.startListening(); 
+
+  if(tx_success)
+  {
+    Serial.print(" TX success ");
+  }
+  else
+  {
+    Serial.print(" TX no success! ");
+  }
   
   return tx_success;
 #endif

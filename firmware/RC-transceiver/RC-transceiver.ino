@@ -46,6 +46,11 @@
 #include "RF24.h"
 #include "printf.h"
 
+#define PIN_NRF_CE  7 //<<< custom setting default
+#define PIN_NRF_CSN 8 //<<< custom setting default
+/* Hardware configuration: Set up nRF24L01 radio on SPI bus plus pins 7 & 8 */
+RF24 radio(PIN_NRF_CE,PIN_NRF_CSN);
+
 #include <Servo.h>
 Servo myservo1;  // create servo object to control a servo
 
@@ -53,8 +58,7 @@ Servo myservo1;  // create servo object to control a servo
 #include "rc_message_types.h"
 #include "rc-transceiver.h"
 
-/* Hardware configuration: Set up nRF24L01 radio on SPI bus plus pins 7 & 8 */
-RF24 radio(PIN_NRF_CE,PIN_NRF_CSN);
+
 
 //////////////////////////////////////////////////////////////////////////////
 void setup() 
@@ -73,18 +77,20 @@ void setup()
     setup_receiver();
   #endif
 
-#if (DEBUG_REPLACE_RADIO_BY_SERIAL == false)
+//#if (DEBUG_REPLACE_RADIO_BY_SERIAL == false)
   //common setup
   radio.begin();
   radio.setAutoAck(1);                    // Ensure autoACK is enabled
   //radio.enableAckPayload();               // Allow optional ack payloads
   radio.setRetries(0, 15);                // Smallest time between retries, max no. of retries
-  radio.setPayloadSize();                // Here we are sending 1-byte payloads to test the call-response speed
+  radio.setPayloadSize(RC_COMMAND_PAYLOAD_SIZE);                // Here we are sending 1-byte payloads to test the call-response speed
   //radio.openWritingPipe(pipes[1]);        // Both radios listen on the same pipes by default, and switch when writing
   //radio.openReadingPipe(1, pipes[0]);
+  
   radio.startListening();                 // Start listening
-  radio.printDetails();                   // Dump the configuration of the rf unit for debugging
-#endif
+  //radio.printDetails();                   // Dump the configuration of the rf unit for debugging
+  Serial.println(" rx started");
+//#endif
 
   //rx/tx specific setup
   #if(USED_TARGET == TARGET_TRANSMITTER)
@@ -161,16 +167,3 @@ void loop_receiver()
 
   GO_TO_SLEEP(true); //sleep some time to save energy
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
