@@ -17,6 +17,9 @@
 
 #define PIN_SERVO_1 9
 
+#define PIN_MOTOR_DIR 6 
+#define PIN_MOTOR_PWM 7
+
 
 int pin_list_buttons[HMI_BUTTON_COUNT] = {PIN_BUTTON_1,PIN_BUTTON_2,PIN_BUTTON_3,PIN_BUTTON_4,PIN_BUTTON_5};
 int pin_list_adc_8bit[HMI_ANALOG_8BIT_COUNT] = {PIN_ADC_POTI_1};//,PIN_ADC_POTI_2};

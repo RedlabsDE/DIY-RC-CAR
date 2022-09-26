@@ -108,6 +108,13 @@ void system_init_receiver()
 {
   pinMode(PIN_LED_STATUS, OUTPUT); 
   digitalWrite(PIN_LED_STATUS, HIGH); //Status LED ON
+
+  pinMode(PIN_MOTOR_DIR, OUTPUT); 
+  digitalWrite(PIN_MOTOR_DIR, HIGH); //
+
+  pinMode(PIN_MOTOR_PWM, OUTPUT); 
+  digitalWrite(PIN_MOTOR_PWM, HIGH); //
+
 }
 //////////////////////////////////////////////////////////////////////////////
 bool battery_voltage_ok()
@@ -350,6 +357,17 @@ bool rc_handle_received_data(struct RC_COMMAND* p_command)
 
       //DC Motor
       //TODO
+      if(p_command->hmi_data.button_state[0] == BS_PRESSED)
+      {
+        //FWD
+        digitalWrite(PIN_MOTOR_DIR, HIGH); //debug
+      }
+      else if(p_command->hmi_data.button_state[1] == BS_PRESSED)
+      {
+        //RWD
+        digitalWrite(PIN_MOTOR_DIR, LOW); //debug
+      }
+
     }
     //else if ...
 
