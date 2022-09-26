@@ -227,7 +227,7 @@ void GO_TO_SLEEP(bool enableWakeup)
 //////////////////////////////////////////////////////////////////////////////
 bool Nrf_TransmitData(struct RC_COMMAND* pPacket)
 {
-#if (DEBUG_REPLACE_RADIO_BY_SERIAL)
+//#if (DEBUG_REPLACE_RADIO_BY_SERIAL)
     Serial.println();
     Serial.print("TX payload: ");
     
@@ -248,7 +248,7 @@ bool Nrf_TransmitData(struct RC_COMMAND* pPacket)
   }
   
   return tx_success;
-#endif
+//#endif
 }
 
 void rc_send_command_type(enum RC_COMMAND_TYPE command_type)
@@ -282,8 +282,7 @@ void rc_send_command_type(enum RC_COMMAND_TYPE command_type)
   //send
   Nrf_TransmitData(p_command);
 
-  rc_handle_received_data(p_command); //TODO debug
-  
+  //rc_handle_received_data(p_command); //only for debug
 
 }
 

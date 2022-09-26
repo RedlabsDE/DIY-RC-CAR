@@ -148,7 +148,7 @@ void loop_transmitter()
     rc_send_command_type(COMMAND_TYPE_DATA_HMI);
   }
   
-  digitalWrite(PIN_LED_STATUS, !digitalRead(PIN_LED_STATUS));   //TODO: debug toggle yellow LED while Alarm is present
+  digitalWrite(PIN_LED_STATUS, !digitalRead(PIN_LED_STATUS)); //debug
   
   //GO_TO_SLEEP(true); //sleep some time to save energy
   _delay_ms(10);
@@ -156,13 +156,31 @@ void loop_transmitter()
 //////////////////////////////////////////////////////////////////////////////
 void loop_receiver()
 {
+  static int last_rx_timeout = 0;
+  last_rx_timeout++;
+
   if( radio.available())
   {
     struct RC_COMMAND rc_command_received;
     struct RC_COMMAND* p_command = &rc_command_received;
 
     radio.read(p_command, sizeof(p_command));
-    rc_handle_received_data(p_command);   
+
+    Serial.println();
+    Serial.print(" RX RC_COMMAND: ");    
+    printStruct(((uint8_t*)p_command),  sizeof(*p_command));
+
+    rc_handle_received_data(p_command);  
+    last_rx_timeout = 0;
+  }
+
+  if(last_rx_timeout < 500) //5sec
+  {
+    digitalWrite(PIN_LED_STATUS,HIGH);
+  }
+  else
+  {
+    digitalWrite(PIN_LED_STATUS,LOW);
   }
 
   GO_TO_SLEEP(true); //sleep some time to save energy
