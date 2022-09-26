@@ -340,10 +340,12 @@ bool rc_handle_received_data(struct RC_COMMAND* p_command)
   //check
   if(rc_check_crc(p_command))
   {
+    Serial.print(" CRC OK"); 
     //handle type and data
     if(p_command->command_type == COMMAND_TYPE_DATA_HMI)
     {
       //Servo  
+      Serial.print(" handle hmi data"); 
       servo1_set_position_from_adc(p_command->hmi_data.analog_values[0]);
 
       //DC Motor
@@ -355,6 +357,7 @@ bool rc_handle_received_data(struct RC_COMMAND* p_command)
   }
   else
   {
+    Serial.print(" CRC NOT OK"); 
     return false;
   }
   

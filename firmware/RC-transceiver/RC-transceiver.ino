@@ -23,7 +23,7 @@
 #define TARGET_TRANSMITTER  1 //Remote Control
 #define TARGET_RECEIVER     2 //Car
 
-#define USED_TARGET TARGET_RECEIVER    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< select mode to download to your arduino
+#define USED_TARGET TARGET_RECEIVER   //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< select mode to download to your arduino
 
 //////////////////////////////////////////////////////////////////////////////
 //defines to customize the system
@@ -50,6 +50,7 @@
 #define PIN_NRF_CSN 8 //<<< custom setting default
 /* Hardware configuration: Set up nRF24L01 radio on SPI bus plus pins 7 & 8 */
 RF24 radio(PIN_NRF_CE,PIN_NRF_CSN);
+const uint64_t pipes[2] = { 0xABCDABCD71LL, 0x544d52687CLL };              // Radio pipe addresses for the 2 nodes to communicate.
 
 #include <Servo.h>
 Servo myservo1;  // create servo object to control a servo
@@ -84,8 +85,8 @@ void setup()
   //radio.enableAckPayload();               // Allow optional ack payloads
   radio.setRetries(0, 15);                // Smallest time between retries, max no. of retries
   radio.setPayloadSize(RC_COMMAND_PAYLOAD_SIZE);                // Here we are sending 1-byte payloads to test the call-response speed
-  //radio.openWritingPipe(pipes[1]);        // Both radios listen on the same pipes by default, and switch when writing
-  //radio.openReadingPipe(1, pipes[0]);
+  radio.openWritingPipe(pipes[0]);        // Both radios listen on the same pipes by default, and switch when writing
+  radio.openReadingPipe(1, pipes[0]);
   
   radio.startListening();                 // Start listening
   //radio.printDetails();                   // Dump the configuration of the rf unit for debugging
@@ -156,7 +157,7 @@ void loop_transmitter()
   }
   else if(last_tx_timeout > LOOP_MS_TO_COUNT(3000))
   {
-    last_tx_success = rc_send_command_type(COMMAND_TYPE_PING);
+    //last_tx_success = rc_send_command_type(COMMAND_TYPE_PING);
     last_tx_timeout = 0;
   }
 
@@ -194,7 +195,7 @@ void loop_receiver()
     struct RC_COMMAND rc_command_received;
     struct RC_COMMAND* p_command = &rc_command_received;
 
-    radio.read(p_command, sizeof(p_command));
+    radio.read(p_command, sizeof(*p_command));
 
     Serial.println();
     Serial.print(" RX RC_COMMAND: ");    
