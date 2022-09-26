@@ -30,8 +30,10 @@ void servo_set_position_from_adc(uint8_t adcValue);
 
 #define PIN_LED_STATUS 9 //<<< custom setting default
 
-
+#define LOOP_SLEEP_TIME_MS 10
 #define SLEEP_TIME_MS 200
+#define LOOP_MS_TO_COUNT(x) (x/LOOP_SLEEP_TIME_MS)
+
 bool battery_voltage_ok();
 void system_shutdown_transmitter();
 void system_check_transmitter();
@@ -40,7 +42,7 @@ int CalculateVoltage(int adcValue);
 void GO_TO_SLEEP(bool enableWakeup); //go to sleep to save battery
 
 bool Nrf_TransmitData(struct RC_COMMAND* pPacket);
-void rc_send_command_type(enum RC_COMMAND_TYPE command_type);
+bool rc_send_command_type(enum RC_COMMAND_TYPE command_type);
 
 void printStruct(const uint8_t* pData, uint8_t len);
 
@@ -99,8 +101,12 @@ void system_init_transmitter()
   //enable power for extern circuits (radio module, buttons, potentiometers, ...)
   pinMode(PIN_ENABLE_POWER, OUTPUT); 
   SUPPLY_SWITCH_ENABLE;
+}
 
-
+void system_init_receiver()
+{
+  pinMode(PIN_LED_STATUS, OUTPUT); 
+  digitalWrite(PIN_LED_STATUS, HIGH); //Status LED ON
 }
 //////////////////////////////////////////////////////////////////////////////
 bool battery_voltage_ok()
@@ -251,7 +257,7 @@ bool Nrf_TransmitData(struct RC_COMMAND* pPacket)
 //#endif
 }
 
-void rc_send_command_type(enum RC_COMMAND_TYPE command_type)
+bool rc_send_command_type(enum RC_COMMAND_TYPE command_type)
 {
   //increment by 1, for each sent packet
   static uint8_t packetNumber = 0;
@@ -280,9 +286,11 @@ void rc_send_command_type(enum RC_COMMAND_TYPE command_type)
   p_command->checksum = rc_calculateSum(((uint8_t*)p_command),  sizeof(*p_command) - 1);
 
   //send
-  Nrf_TransmitData(p_command);
+  bool tx_success = Nrf_TransmitData(p_command);
 
   //rc_handle_received_data(p_command); //only for debug
+
+  return tx_success;
 
 }
 

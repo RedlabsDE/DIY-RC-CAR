@@ -23,7 +23,7 @@
 #define TARGET_TRANSMITTER  1 //Remote Control
 #define TARGET_RECEIVER     2 //Car
 
-#define USED_TARGET TARGET_TRANSMITTER    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< select mode to download to your arduino
+#define USED_TARGET TARGET_RECEIVER    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< select mode to download to your arduino
 
 //////////////////////////////////////////////////////////////////////////////
 //defines to customize the system
@@ -94,9 +94,9 @@ void setup()
 
   //rx/tx specific setup
   #if(USED_TARGET == TARGET_TRANSMITTER)
-    //rc_send_command_type(COMMAND_TYPE_STARTUP);
+    rc_send_command_type(COMMAND_TYPE_STARTUP);
   #else if( USED_TARGET == TARGET_RECEIVER)
-
+    //rc_send_command_type(COMMAND_TYPE_STARTUP);
   #endif
   
 }
@@ -108,8 +108,6 @@ void setup_transmitter()
   {
     //procceed if it is in range ...
     system_init_transmitter();  
-
-    setup_receiver(); //DEBUG test  
   }
   else
   {  
@@ -119,8 +117,12 @@ void setup_transmitter()
 }
 void setup_receiver()
 {
+  system_init_receiver();
+
   myservo1.attach(PIN_SERVO_1);  // attaches the servo on pin x to the servo object
   myservo1.write(180/2); //move to mid position  
+
+  //dc motor
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -134,10 +136,14 @@ void loop()
   #endif
 }
 
-
+int loopCounter = 0;
 //////////////////////////////////////////////////////////////////////////////
 void loop_transmitter()
 {  
+  static bool last_tx_success = false;
+  static int last_tx_timeout = 0;
+  last_tx_timeout++;
+
   //check battery and powerbutton state
   //system_check_transmitter();
   
@@ -145,19 +151,42 @@ void loop_transmitter()
   if(hmi_has_changed())
   {
     //send out last_hmi_data via radio
-    rc_send_command_type(COMMAND_TYPE_DATA_HMI);
+    last_tx_success = rc_send_command_type(COMMAND_TYPE_DATA_HMI);
+    last_tx_timeout = 0;
   }
-  
-  digitalWrite(PIN_LED_STATUS, !digitalRead(PIN_LED_STATUS)); //debug
-  
+  else if(last_tx_timeout > LOOP_MS_TO_COUNT(1000))
+  {
+    last_tx_success = rc_send_command_type(COMMAND_TYPE_PING);
+    last_tx_timeout = 0;
+  }
+
+  if(loopCounter% (LOOP_MS_TO_COUNT(100) + last_tx_success*LOOP_MS_TO_COUNT(900)) == 0) //successfull transmission with response from receiver: 1000ms, no response from receiver: 100ms
+  {
+    digitalWrite(PIN_LED_STATUS, !digitalRead(PIN_LED_STATUS));
+  }
+
+  loopCounter++;  
   //GO_TO_SLEEP(true); //sleep some time to save energy
-  _delay_ms(10);
+  _delay_ms(10); //dummy
 }
 //////////////////////////////////////////////////////////////////////////////
+
+
+
+
 void loop_receiver()
 {
+  static bool connected = false;
   static int last_rx_timeout = 0;
-  last_rx_timeout++;
+  
+  if(last_rx_timeout<LOOP_MS_TO_COUNT(5000))
+  {
+    last_rx_timeout++;
+  }
+  else
+  {
+    connected = false; //5 seconds without receiving any data
+  }
 
   if( radio.available())
   {
@@ -172,16 +201,115 @@ void loop_receiver()
 
     rc_handle_received_data(p_command);  
     last_rx_timeout = 0;
+    connected = true;
   }
 
-  if(last_rx_timeout < 500) //5sec
+  
+  if(loopCounter % (LOOP_MS_TO_COUNT(100) + connected*LOOP_MS_TO_COUNT(900)) == 0) //successfull transmission with response from receiver: 1000ms, no response from receiver: 100ms
   {
-    digitalWrite(PIN_LED_STATUS,HIGH);
+    digitalWrite(PIN_LED_STATUS, !digitalRead(PIN_LED_STATUS));
+  }
+
+  loopCounter++;
+  //GO_TO_SLEEP(true); //sleep some time to save energy
+  _delay_ms(10); //dummy
+}
+
+void receiver_connection_lost()
+{
+  //stop motor
+
+  //indicate connection loss
+
+}
+
+
+enum DC_MOTOR_DIRECTION
+{
+  DCM_STOP,
+  DCM_FWD,
+  DCM_RWD,
+};
+
+struct DC_MOTOR_CONTROL
+{
+  bool enable;
+
+  uint8_t speed_current; //actual motor state
+  uint8_t speed_destination; 
+
+  enum DC_MOTOR_DIRECTION direction_current; //actual motor state
+  enum DC_MOTOR_DIRECTION direction_destination;
+};
+
+struct DC_MOTOR_CONTROL dc_motor_1;
+
+/*
+void dc_motor_set_direction(enum DC_MOTOR_DIRECTION dir)
+{
+  dc_motor_1.direction_destination = dir;
+}
+*/
+
+void dc_motor_set_speed(uint8_t speed)
+{
+  dc_motor_1.speed_destination = speed;
+}
+
+//stop motor
+void dc_motor_stop()
+{
+  dc_motor_1.enable = false;
+}
+
+void dc_motor_start()
+{
+  dc_motor_1.enable = true;
+}
+
+void dc_motor_output()
+{
+  //update pwm
+
+  //update direction
+
+}
+
+void dc_motor_process()
+{
+  //check if enable, speed, dir is changed. Fade to destination value
+  if(dc_motor_1.enable)
+  {
+    if(dc_motor_1.direction_current == dc_motor_1.direction_destination)
+    {
+      if(dc_motor_1.speed_destination < dc_motor_1.speed_current)
+      {
+        dc_motor_1.speed_current --;
+      }
+      else  if(dc_motor_1.speed_destination > dc_motor_1.speed_current)
+      {
+        dc_motor_1.speed_current ++;
+      }
+    }
+    else
+    {
+      //stop motor
+      dc_motor_1.speed_current = 0;
+      dc_motor_output();
+      delay(100);
+
+      //change direction
+      dc_motor_1.direction_current = dc_motor_1.direction_destination;
+
+      //start motor
+    }
+
   }
   else
   {
-    digitalWrite(PIN_LED_STATUS,LOW);
+    dc_motor_stop();
   }
 
-  GO_TO_SLEEP(true); //sleep some time to save energy
+  dc_motor_output();
+
 }
