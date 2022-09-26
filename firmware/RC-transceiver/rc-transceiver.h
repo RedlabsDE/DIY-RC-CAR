@@ -28,7 +28,7 @@ void servo_set_position_from_adc(uint8_t adcValue);
 #define SUPPLY_SWITCH_ENABLE   digitalWrite(PIN_ENABLE_POWER, LOW)
 #define SUPPLY_SWITCH_DISABLE  digitalWrite(PIN_ENABLE_POWER, HIGH)
 
-#define PIN_LED_STATUS 9 //<<< custom setting default
+#define PIN_LED_STATUS 10 //<<< custom setting default
 
 #define LOOP_SLEEP_TIME_MS 10
 #define SLEEP_TIME_MS 200
@@ -45,6 +45,7 @@ bool Nrf_TransmitData(struct RC_COMMAND* pPacket);
 bool rc_send_command_type(enum RC_COMMAND_TYPE command_type);
 
 void printStruct(const uint8_t* pData, uint8_t len);
+void clearStruct( uint8_t* pData, uint8_t len);
 
 void servo1_set_position_from_adc(uint8_t adcValue);
 bool rc_handle_received_data(struct RC_COMMAND* p_command);
@@ -282,6 +283,13 @@ bool rc_send_command_type(enum RC_COMMAND_TYPE command_type)
     struct RC_HMI_DATA* p_global_last_hmi_data = hmi_get_last_data();
     memcpy(&p_command->hmi_data, p_global_last_hmi_data, sizeof(p_command->hmi_data));   
   }
+  else
+  {
+    //clear struct
+    //clearStruct(p_command->hmi_data, sizeof(p_command->hmi_data));
+    //clearStruct(((uint8_t*)p_command->hmi_data),  sizeof(*p_command->hmi_data));
+    //printStruct(((uint8_t*)pPacket),  sizeof(*pPacket));
+  }
 
   p_command->checksum = rc_calculateSum(((uint8_t*)p_command),  sizeof(*p_command) - 1);
 
@@ -311,6 +319,16 @@ void printStruct(const uint8_t* pData, uint8_t len)
         res = *pData;
         Serial.print(res);
         Serial.print(" ");        
+        pData++;
+    }
+}
+//debug
+void clearStruct( uint8_t* pData, uint8_t len)
+{
+    const uint8_t* pEnd = pData + len;
+    while (pData != pEnd)
+    {
+        *pData = 0;     
         pData++;
     }
 }

@@ -154,15 +154,16 @@ void loop_transmitter()
     last_tx_success = rc_send_command_type(COMMAND_TYPE_DATA_HMI);
     last_tx_timeout = 0;
   }
-  else if(last_tx_timeout > LOOP_MS_TO_COUNT(1000))
+  else if(last_tx_timeout > LOOP_MS_TO_COUNT(3000))
   {
     last_tx_success = rc_send_command_type(COMMAND_TYPE_PING);
     last_tx_timeout = 0;
   }
 
-  if(loopCounter% (LOOP_MS_TO_COUNT(100) + last_tx_success*LOOP_MS_TO_COUNT(900)) == 0) //successfull transmission with response from receiver: 1000ms, no response from receiver: 100ms
+  if( loopCounter % (LOOP_MS_TO_COUNT(100) + last_tx_success*LOOP_MS_TO_COUNT(900)) == 0) //successfull transmission with response from receiver: 1000ms, no response from receiver: 100ms
   {
     digitalWrite(PIN_LED_STATUS, !digitalRead(PIN_LED_STATUS));
+    loopCounter = 0;
   }
 
   loopCounter++;  

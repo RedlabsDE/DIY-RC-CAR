@@ -2,7 +2,7 @@
 #define HMI_BUTTON_COUNT  5
 #define HMI_ANALOG_8BIT_COUNT 1
 
-#define ADC_HYSTERESIS_COUNTS 5 //a change of ADC measured counts (compared to last saved value) below this value will be dismissed
+#define ADC_HYSTERESIS_COUNTS 10 //a change of ADC measured counts (compared to last saved value) below this value will be dismissed
 
 #define PIN_BUTTON_1 2 //<<< custom setting
 #define PIN_BUTTON_2 3 //<<< custom setting
@@ -74,14 +74,14 @@ void hmi_set_last_data(struct RC_HMI_DATA* new_hmi_data)
 // Do ADC sampling and mean calculation
 int get_averaged_Adc(int adcPin)
 {
-  int adcVal = 0;
+  int32_t adcVal = 0;
   for (int i = 0; i < 10; i++)
   {
     adcVal += analogRead(adcPin);
   }
   adcVal = adcVal / 10;
 
-  return adcVal;
+  return (int)adcVal;
 }
 
 //read and return all hmi states (buttons, potis, ...)
