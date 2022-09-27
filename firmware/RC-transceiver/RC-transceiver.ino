@@ -59,7 +59,8 @@ Servo myservo1;  // create servo object to control a servo
 #include "rc_message_types.h"
 #include "rc-transceiver.h"
 
-
+#include "rc_dc_motor.h"
+struct DC_MOTOR_CONTROL dc_motor_1;
 
 //////////////////////////////////////////////////////////////////////////////
 void setup() 
@@ -124,6 +125,7 @@ void setup_receiver()
   myservo1.write(180/2); //move to mid position  
 
   //dc motor
+  dc_motor1_init();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -206,6 +208,8 @@ void loop_receiver()
     connected = true;
   }
 
+  dc_motor_control(&dc_motor_1);
+
   
   if(loopCounter % (LOOP_MS_TO_COUNT(100) + connected*LOOP_MS_TO_COUNT(900)) == 0) //successfull transmission with response from receiver: 1000ms, no response from receiver: 100ms
   {
@@ -220,98 +224,63 @@ void loop_receiver()
 void receiver_connection_lost()
 {
   //stop motor
+  dc_motor_enable(&dc_motor_1, false);
 
   //indicate connection loss
 
 }
 
 
-enum DC_MOTOR_DIRECTION
+
+void dc_motor1_init()
 {
-  DCM_STOP,
-  DCM_FWD,
-  DCM_RWD,
-};
+  //TODO add pin defs
+  dc_motor_1.pin_gateP_neg = 0; //digital pin to set direction
+  dc_motor_1.pin_gateP_pos = 0; //digital pin to set direction
+  dc_motor_1.pin_gateN_neg = 0; //digital pin to set speed via PWM
+  dc_motor_1.pin_gateN_pos = 0; //digital pin to set speed via PWM
 
-struct DC_MOTOR_CONTROL
-{
-  bool enable;
+  dc_motor_init(&dc_motor_1);
 
-  uint8_t speed_current; //actual motor state
-  uint8_t speed_destination; 
-
-  enum DC_MOTOR_DIRECTION direction_current; //actual motor state
-  enum DC_MOTOR_DIRECTION direction_destination;
-};
-
-struct DC_MOTOR_CONTROL dc_motor_1;
-
-/*
-void dc_motor_set_direction(enum DC_MOTOR_DIRECTION dir)
-{
-  dc_motor_1.direction_destination = dir;
-}
-*/
-
-void dc_motor_set_speed(uint8_t speed)
-{
-  dc_motor_1.speed_destination = speed;
+  //Set Motor PWM frequency, (default: 490 Hz), //this changes the delay() time!!!!
+  setPwmFrequency(dc_motor_1.pin_gateN_pos,1); //set PWM freq to 32kHz (31250/1 Hz)
+  setPwmFrequency(dc_motor_1.pin_gateN_neg,1); //set PWM freq to 32kHz (31250/1 Hz)
 }
 
-//stop motor
-void dc_motor_stop()
+
+//TODO test
+void setPwmFrequency(int pin, int divisor)
 {
-  dc_motor_1.enable = false;
-}
-
-void dc_motor_start()
-{
-  dc_motor_1.enable = true;
-}
-
-void dc_motor_output()
-{
-  //update pwm
-
-  //update direction
-
-}
-
-void dc_motor_process()
-{
-  //check if enable, speed, dir is changed. Fade to destination value
-  if(dc_motor_1.enable)
+  byte mode;
+  if(pin == 5 || pin == 6 || pin == 9 || pin == 10)
   {
-    if(dc_motor_1.direction_current == dc_motor_1.direction_destination)
+    switch(divisor)
     {
-      if(dc_motor_1.speed_destination < dc_motor_1.speed_current)
-      {
-        dc_motor_1.speed_current --;
-      }
-      else  if(dc_motor_1.speed_destination > dc_motor_1.speed_current)
-      {
-        dc_motor_1.speed_current ++;
-      }
+      case 1: mode = 0x01; break;
+      case 8: mode = 0x02; break;
+      case 64: mode = 0x03; break;
+      case 256: mode = 0x04; break;
+      case 1024: mode = 0x05; break;
+      default: return;
     }
-    else
+    if(pin == 5 || pin == 6)
     {
-      //stop motor
-      dc_motor_1.speed_current = 0;
-      dc_motor_output();
-      delay(100);
-
-      //change direction
-      dc_motor_1.direction_current = dc_motor_1.direction_destination;
-
-      //start motor
+      TCCR0B = TCCR0B & 0b11111000 | mode;
+    } else
+    {
+      TCCR1B = TCCR1B & 0b11111000 | mode;
     }
-
+  } else if(pin == 3 || pin == 11) {
+    switch(divisor) {
+      case 1: mode = 0x01; break;
+      case 8: mode = 0x02; break;
+      case 32: mode = 0x03; break;
+      case 64: mode = 0x04; break;
+      case 128: mode = 0x05; break;
+      case 256: mode = 0x06; break;
+      case 1024: mode = 0x07; break;
+      default: return;
+    }
+    TCCR2B = TCCR2B & 0b11111000 | mode;
   }
-  else
-  {
-    dc_motor_stop();
-  }
-
-  dc_motor_output();
-
 }

@@ -12,8 +12,10 @@ void loop_transmitter();
 // Receiver specific code
 void setup_receiver();
 void loop_receiver();
+void dc_motor1_init();
 
 void servo_set_position_from_adc(uint8_t adcValue);
+
 
 //////////////////////////////////////////////////////////////////////////////
 // Common code
@@ -55,6 +57,8 @@ bool rc_handle_received_data(struct RC_COMMAND* p_command);
 #define BATTERY_CELL_MIN_MV 800 // 800mV min feasable battery voltage for NiMH rechargeable
 #define BATTERY_MIN_MV (BATTERY_CELL_MIN_MV*BATTERY_CELL_COUNT)
 bool check_battery_voltage(int adc_pin);
+
+
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
