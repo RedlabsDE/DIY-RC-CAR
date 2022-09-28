@@ -1,29 +1,74 @@
 # README #
 
-Create a simple RC-Car Control.  
-RC and Car are arduino based and will communicate via NRF24L01 wireless transceiver module (2.4GHz).
-
-
+Create a simple remote controlled car.
 
 ### What is this repository for? ###
 
-* Quick summary
-* Firmware  
-	Too keep it simple, RC (transmitter) and the car (receiver) share the same arduino code.
-* Hardware  
-	- Transmitter: Arduino + NRF24L01 + Buttons + Potentiometers + Battery (3x 1.2V AA Rechargeable)
-	- Receiver: + NRF24L01 + DC Motor Driver +  5V USB Powerbank
-* Mechanics
+* Quick summary  
+	- RC and Car are bothed based on an arduino and will communicate via a wireless module (NRF24L01, 2.4GHz)
+	- The RC (transmitter) looks for user input (Buttons,..) and send current state
+	- The Car (receiver) reacts to received user input and set direction and speed of motor
 
-### How do I get set up? ###
+## Firmware Setup ##
+Too keep it simple, RC (transmitter) and the car (receiver) share the same arduino code.
 
-* Summary of set up
-* Configuration
-* Dependencies
-* How to run tests
-* Deployment instructions
+```
+#define TARGET_TRANSMITTER  1 //Remote Control
+#define TARGET_RECEIVER     2 //Car
 
+#define USED_TARGET TARGET_TRANSMITTER //<<< set target to be compiled
+```
+## Hardware Setup ##
 
-### Who do I talk to? ###
+- Find schematics of transmitter and receiver in `...\RC-Transceiver\hardware\schematic`
+- Find datasheets of used components in `...\RC-Transceiver\hardware\datasheet`
 
-* Repo owner or admin
+- `NRF24L01:` Transmitter and Receiver use same NRF pin setup
+
+| Module      | Arduino Pin    |
+|---------------|-------|
+| NRF_MOSI 		|11     |
+| NRF_MISO      | 12 	|
+| NRF_MISO      | 13 	|
+| NRF_CE      	| 7 	|
+| NRF_CSN      	| 8 	|
+| NRF_IRQ      	| N/A 	|
+
+### Transmitter ###
+- `Board:` Arduino Pro Mini (without USB connector)
+- `Supply:` Battery (3x 1.2V AA Rechargeable) 
+- `NRF24L01:` Connect NRF supply pin to 3V, Arduino Pro Mini: "VCC"
+- `Push Buttons:` connect other pin to ground (active low)
+- `Status LED:` connect other pin to ground (active high)
+- `Potentiometer:` connect upper pin to VCC, lower pin to gnd, add capacitor to gnd on middle pin
+
+| Module         | Arduino Pin    |
+|--------------|--------|
+| Status LED	|10     |
+| Button_1 		|2     |
+| Button_2 		|3     |
+| Potentiometer1|0     |
+
+### Receiver ###
+- `Board:` Arduino nano (with USB-mini connector)
+- `Supply:` 5V (USB Powerbank) via Arduino USB connector
+- `NRF24L01:` Connect NRF supply pin to 3V, Arduino Nano: "3V3"
+- `Status LED:` connect other pin to ground (active high)
+- `Servo:` connect supply pin to 5V
+- `H-Bridge Motor Driver:` connect supply pin to 5V
+- `DC Motor:` Connect Motor pins to motor driver
+
+| Module         | Arduino Pin    |
+|--------------|--------|
+| Status LED	|10     |
+| WS2812 DATA		|?     |
+| Servo_Control	|9     |
+| DCM_GateP_neg	|?     |
+| DCM_GateP_pos	|?     |
+| DCM_GateN_neg	|?     |
+| DCM_GateN_pos	|?     |
+
+## Mechanic Setup ##
+
+- Use DC Motor to drive car forward and backward
+- Use Servo to rotate single front wheel to set direction
