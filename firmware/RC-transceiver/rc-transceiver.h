@@ -50,6 +50,7 @@ void printStruct(const uint8_t* pData, uint8_t len);
 void clearStruct( uint8_t* pData, uint8_t len);
 
 void servo1_set_position_from_adc(uint8_t adcValue);
+void motor1_set_direction_from_buttons(uint8_t button_fwd, uint8_t button_rwd);
 bool rc_handle_received_data(struct RC_COMMAND* p_command);
 
 // Battery Voltage Measurement
@@ -355,23 +356,13 @@ bool rc_handle_received_data(struct RC_COMMAND* p_command)
     //handle type and data
     if(p_command->command_type == COMMAND_TYPE_DATA_HMI)
     {
-      //Servo  
       Serial.print(" handle hmi data"); 
+
+      //Servo        
       servo1_set_position_from_adc(p_command->hmi_data.analog_values[0]);
 
       //DC Motor
-      //TODO
-      if(p_command->hmi_data.button_state[0] == BS_PRESSED)
-      {
-        //FWD
-        digitalWrite(PIN_MOTOR_DIR, HIGH); //debug
-      }
-      else if(p_command->hmi_data.button_state[1] == BS_PRESSED)
-      {
-        //RWD
-        digitalWrite(PIN_MOTOR_DIR, LOW); //debug
-      }
-
+      motor1_set_direction_from_buttons(p_command->hmi_data.button_state[0], p_command->hmi_data.button_state[1]); //Button_FWD, Button_RWD
     }
     //else if ...
 
@@ -383,6 +374,24 @@ bool rc_handle_received_data(struct RC_COMMAND* p_command)
     return false;
   }
   
+}
+
+void motor1_set_direction_from_buttons(uint8_t button_fwd, uint8_t button_rwd)
+{
+  //
+  if(button_fwd == BS_PRESSED || button_fwd == BS_REPEATED || button_fwd == BS_LONG_PRESS)
+  {
+    dc_motor_set_direction(&dc_motor_1, DCM_FWD);
+  }
+  else if(button_rwd == BS_PRESSED || button_rwd == BS_REPEATED || button_rwd == BS_LONG_PRESS)
+  {
+    dc_motor_set_direction(&dc_motor_1, DCM_RWD);
+  }
+  else
+  {
+    dc_motor_set_direction(&dc_motor_1, DCM_STOP);
+  }
+
 }
 
 // Use analog value of potentiometer (0...255) to set servo position

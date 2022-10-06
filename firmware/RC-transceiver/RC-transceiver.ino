@@ -32,7 +32,13 @@
 #define USE_BATTERY_MONITOR false
 //////////////////////////////////////////////////////////////////////////////
 
-
+enum STATUS_LED
+{
+  SL_OFF,
+  SL_ON,
+  SL_BLINK_FAST,
+  SL_BLINK_SLOW,
+};
 //////////////////////////////////////////////////////////////////////////////
 
 #ifdef __AVR__
@@ -53,14 +59,16 @@ RF24 radio(PIN_NRF_CE,PIN_NRF_CSN);
 const uint64_t pipes[2] = { 0xABCDABCD71LL, 0x544d52687CLL };              // Radio pipe addresses for the 2 nodes to communicate.
 
 #include <Servo.h>
-Servo myservo1;  // create servo object to control a servo
+Servo myservo1;  //use this servo to set direcetion (angle of front wheel)
+
+#include "rc_dc_motor.h"
+struct DC_MOTOR_CONTROL dc_motor_1; //use this motor as main engine to drive forward/backward
 
 #include "rc_hmi.h" //user interface (buttons, ...)
 #include "rc_message_types.h"
 #include "rc-transceiver.h"
 
-#include "rc_dc_motor.h"
-struct DC_MOTOR_CONTROL dc_motor_1;
+
 
 //////////////////////////////////////////////////////////////////////////////
 void setup() 
@@ -163,11 +171,7 @@ void loop_transmitter()
     last_tx_timeout = 0;
   }
 
-  if( loopCounter % (LOOP_MS_TO_COUNT(100) + last_tx_success*LOOP_MS_TO_COUNT(900)) == 0) //successfull transmission with response from receiver: 1000ms, no response from receiver: 100ms
-  {
-    digitalWrite(PIN_LED_STATUS, !digitalRead(PIN_LED_STATUS));
-    loopCounter = 0;
-  }
+  indicate_status_led(last_tx_success==true ? SL_BLINK_SLOW : SL_BLINK_FAST); //last data received within timout: blink fast, timeout expired: blink slow
 
   loopCounter++;  
   //GO_TO_SLEEP(true); //sleep some time to save energy
@@ -190,6 +194,7 @@ void loop_receiver()
   else
   {
     connected = false; //5 seconds without receiving any data
+    receiver_connection_lost();
   }
 
   if( radio.available())
@@ -210,11 +215,7 @@ void loop_receiver()
 
   dc_motor_control(&dc_motor_1);
 
-  
-  if(loopCounter % (LOOP_MS_TO_COUNT(100) + connected*LOOP_MS_TO_COUNT(900)) == 0) //successfull transmission with response from receiver: 1000ms, no response from receiver: 100ms
-  {
-    digitalWrite(PIN_LED_STATUS, !digitalRead(PIN_LED_STATUS));
-  }
+  indicate_status_led(connected==true ? SL_BLINK_SLOW : SL_BLINK_FAST); //last data received within timout: blink fast, timeout expired: blink slow
 
   loopCounter++;
   //GO_TO_SLEEP(true); //sleep some time to save energy
@@ -224,12 +225,42 @@ void loop_receiver()
 void receiver_connection_lost()
 {
   //stop motor
-  dc_motor_enable(&dc_motor_1, false);
+  //dc_motor_enable(&dc_motor_1, false);
+  dc_motor_set_direction(&dc_motor_1, DCM_STOP);
 
   //indicate connection loss
 
 }
 
+
+
+void indicate_status_led(uint8_t status)
+{
+  int blink_time = 0;
+
+  switch(status)
+  {
+    case SL_OFF:
+      digitalWrite(PIN_LED_STATUS, LOW);
+    break;
+    case SL_ON:
+      digitalWrite(PIN_LED_STATUS, HIGH);
+    break;
+    case SL_BLINK_FAST:
+      blink_time = LOOP_MS_TO_COUNT(100);
+    break;
+    case SL_BLINK_SLOW:
+      blink_time = LOOP_MS_TO_COUNT(1000);
+    break;
+    default:
+    break;
+  }
+
+  if( (blink_time!=0) && (loopCounter % blink_time == 0))
+  {
+    digitalWrite(PIN_LED_STATUS, !digitalRead(PIN_LED_STATUS));
+  }  
+}
 
 
 void dc_motor1_init()
