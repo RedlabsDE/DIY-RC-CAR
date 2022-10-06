@@ -25,6 +25,8 @@ struct DC_MOTOR_CONTROL
   uint8_t pin_gateN_neg; //digital pin to set speed via PWM
   uint8_t pin_gateN_pos; //digital pin to set speed via PWM
 
+  bool pmos_active;
+
 };
 
 void dc_motor_set_direction(struct DC_MOTOR_CONTROL* dc_motor, enum DC_MOTOR_DIRECTION dir)
@@ -34,6 +36,11 @@ void dc_motor_set_direction(struct DC_MOTOR_CONTROL* dc_motor, enum DC_MOTOR_DIR
 
 void dc_motor_set_speed(struct DC_MOTOR_CONTROL* dc_motor, uint8_t speed)
 {
+  //TODO add minimum speed (absolut min is step size in motor ramp up/down)
+  if(speed < 5)
+  {
+    speed = 5;
+  }
   dc_motor->speed_destination = speed;
 }
 
@@ -49,8 +56,8 @@ void dc_motor_init(struct DC_MOTOR_CONTROL* dc_motor)
   pinMode(dc_motor->pin_gateN_pos, OUTPUT); //PWM
   pinMode(dc_motor->pin_gateN_neg, OUTPUT); //PWM
 
-  digitalWrite(dc_motor->pin_gateP_neg, LOW);
-  digitalWrite(dc_motor->pin_gateP_pos, LOW);
+  digitalWrite(dc_motor->pin_gateP_neg, HIGH);
+  digitalWrite(dc_motor->pin_gateP_pos, HIGH);
   digitalWrite(dc_motor->pin_gateN_pos, LOW);
   digitalWrite(dc_motor->pin_gateN_neg, LOW);
 
@@ -110,9 +117,15 @@ void dc_motor_control(struct DC_MOTOR_CONTROL* dc_motor)
     {
         dc_motor->speed_current = 0;
         dc_motor->direction_current = DCM_STOP;
+      #if DEBUG
+        Serial.println("enable=false");
+      #endif
     }
     if(dc_motor->initDone == false)
     {
+      #if DEBUG
+        Serial.println("initDone=false");
+      #endif
         return;
     }
 
@@ -137,26 +150,31 @@ void dc_motor_control(struct DC_MOTOR_CONTROL* dc_motor)
 
   //output speed and direction to H-Bridge (use two GPIOs and two PWMs)
   #if MOTOR_HBRIDGE
+    //here, the P-MOSFETs are driven directly by a GPIO (pin low = active). If inverting transistors are used (if V_motor > V_uC), switch following settings.
+    bool PMOS_ACTIVE = dc_motor->pmos_active;
+    bool PMOS_INACTIVE = !dc_motor->pmos_active;
+
+
     if(dc_motor->direction_current == DCM_FWD)
     {
-      digitalWrite(dc_motor->pin_gateP_pos, HIGH); //set Motor-Pos to supply voltage
-      digitalWrite(dc_motor->pin_gateP_neg, LOW); //disconnect Motor-Neg from supply voltage
-      analogWrite(dc_motor->pin_gateN_neg,dc_motor->speed_current); //PWM output to low-side switch on Motor-Neg
-      analogWrite(dc_motor->pin_gateN_pos,0); //stop PWM output to low-side switch on Motor-Pos
+      digitalWrite(dc_motor->pin_gateP_pos, PMOS_ACTIVE); //G1, set Motor-Pos to supply voltage
+      digitalWrite(dc_motor->pin_gateP_neg, PMOS_INACTIVE); //G4, disconnect Motor-Neg from supply voltage
+      analogWrite(dc_motor->pin_gateN_neg,dc_motor->speed_current); //G3, PWM output to low-side switch on Motor-Neg
+      analogWrite(dc_motor->pin_gateN_pos,0); //G2, stop PWM output to low-side switch on Motor-Pos
     }
     else if (dc_motor->direction_current == DCM_RWD)
     {
-      digitalWrite(dc_motor->pin_gateP_neg, HIGH); //set Motor-Neg to supply voltage
-      digitalWrite(dc_motor->pin_gateP_pos, LOW); //disconnect Motor-Pos from supply voltage
-      analogWrite(dc_motor->pin_gateN_pos,dc_motor->speed_current); //PWM output to low-side switch on Motor-Pos
-      analogWrite(dc_motor->pin_gateN_neg,0); //stop PWM output to low-side switch on Motor-Neg
+      digitalWrite(dc_motor->pin_gateP_neg, PMOS_ACTIVE); //G4, set Motor-Neg to supply voltage
+      digitalWrite(dc_motor->pin_gateP_pos, PMOS_INACTIVE); //G1, disconnect Motor-Pos from supply voltage
+      analogWrite(dc_motor->pin_gateN_pos,dc_motor->speed_current); //G2, PWM output to low-side switch on Motor-Pos
+      analogWrite(dc_motor->pin_gateN_neg,0); //G3, stop PWM output to low-side switch on Motor-Neg
     }
     else //motor stopped
     {
-      digitalWrite(dc_motor->pin_gateP_pos, HIGH); //set Motor-Pos to supply voltage  <--- used for start/stop detection
-      digitalWrite(dc_motor->pin_gateP_neg, LOW); //disconnect Motor-Neg from supply voltage
-      analogWrite(dc_motor->pin_gateN_neg,0); //stop PWM output to low-side switch on Motor-Neg
-      analogWrite(dc_motor->pin_gateN_pos,0); //stop PWM output to low-side switch on Motor-Pos
+      digitalWrite(dc_motor->pin_gateP_pos, PMOS_INACTIVE); //G1, disconnect Motor-Pos from supply voltage
+      digitalWrite(dc_motor->pin_gateP_neg, PMOS_INACTIVE); //G4, disconnect Motor-Neg from supply voltage
+      analogWrite(dc_motor->pin_gateN_neg,0); //G3, stop PWM output to low-side switch on Motor-Neg
+      analogWrite(dc_motor->pin_gateN_pos,0); //G2, stop PWM output to low-side switch on Motor-Pos
     }
   #endif
 

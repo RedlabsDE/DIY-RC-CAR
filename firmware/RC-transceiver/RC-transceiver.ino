@@ -224,12 +224,9 @@ void loop_receiver()
 
 void receiver_connection_lost()
 {
-  //stop motor
-  //dc_motor_enable(&dc_motor_1, false);
   dc_motor_set_direction(&dc_motor_1, DCM_STOP);
 
-  //indicate connection loss
-
+  //indication of connection loss in loop
 }
 
 
@@ -265,17 +262,21 @@ void indicate_status_led(uint8_t status)
 
 void dc_motor1_init()
 {
-  //TODO add pin defs
-  dc_motor_1.pin_gateP_neg = 0; //digital pin to set direction
-  dc_motor_1.pin_gateP_pos = 0; //digital pin to set direction
-  dc_motor_1.pin_gateN_neg = 0; //digital pin to set speed via PWM
-  dc_motor_1.pin_gateN_pos = 0; //digital pin to set speed via PWM
+  dc_motor_1.pin_gateP_neg = 3; //digital pin to set direction "G4"
+  dc_motor_1.pin_gateP_pos = 4; //digital pin to set direction "G1"
+  dc_motor_1.pin_gateN_neg = 5; //digital pin to set speed via PWM "G3"
+  dc_motor_1.pin_gateN_pos = 6; //digital pin to set speed via PWM "G2"
+
+  dc_motor_1.pmos_active = LOW; //PMOS Gate is connected to GPIO (V_motor = V_uC = 5V), with additional external pull-up to V_motor
 
   dc_motor_init(&dc_motor_1);
+  dc_motor_enable(&dc_motor_1,true);
+
+  dc_motor_set_speed(&dc_motor_1, 100); //set fixed speed, used for both directions
 
   //Set Motor PWM frequency, (default: 490 Hz), //this changes the delay() time!!!!
-  setPwmFrequency(dc_motor_1.pin_gateN_pos,1); //set PWM freq to 32kHz (31250/1 Hz)
-  setPwmFrequency(dc_motor_1.pin_gateN_neg,1); //set PWM freq to 32kHz (31250/1 Hz)
+  //setPwmFrequency(dc_motor_1.pin_gateN_pos,1); //set PWM freq to 32kHz (31250/1 Hz)
+  //setPwmFrequency(dc_motor_1.pin_gateN_neg,1); //set PWM freq to 32kHz (31250/1 Hz)
 }
 
 
