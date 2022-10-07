@@ -27,7 +27,7 @@ Too keep it simple, RC (transmitter) and the car (receiver) share the same ardui
 
 | Signal      | Arduino Pin    |
 |---------------|-------|
-| NRF_MOSI 		|11     |
+| NRF_MOSI 		| 11    |
 | NRF_MISO      | 12 	|
 | NRF_MISO      | 13 	|
 | NRF_CE      	| 7 	|
