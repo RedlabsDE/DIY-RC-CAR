@@ -25,7 +25,7 @@ Too keep it simple, RC (transmitter) and the car (receiver) share the same ardui
 
 - `NRF24L01:` Transmitter and Receiver use same NRF pin setup
 
-| Module      | Arduino Pin    |
+| Signal      | Arduino Pin    |
 |---------------|-------|
 | NRF_MOSI 		|11     |
 | NRF_MISO      | 12 	|
@@ -42,12 +42,12 @@ Too keep it simple, RC (transmitter) and the car (receiver) share the same ardui
 - `Status LED:` connect other pin to ground (active high)
 - `Potentiometer:` connect upper pin to VCC, lower pin to gnd, add capacitor to gnd on middle pin
 
-| Module         | Arduino Pin    |
-|--------------|--------|
-| Status LED	|10     |
-| Button_1 		|2     |
-| Button_2 		|3     |
-| Potentiometer1|0     |
+| Signal         	| Arduino Pin   |
+|--------------		|--------		|
+| LED_STATUS		|10     		|
+| Pushbutton_1 		|2     			|
+| Pushbutton_2 		|3     			|
+| Potentiometer_1	|0     			|
 
 ### Receiver ###
 - `Board:` Arduino nano (with USB-mini connector)
@@ -58,15 +58,21 @@ Too keep it simple, RC (transmitter) and the car (receiver) share the same ardui
 - `H-Bridge Motor Driver:` connect supply pin to 5V
 - `DC Motor:` Connect Motor pins to motor driver
 
-| Module         | Arduino Pin    |
-|--------------|--------|
-| Status LED	|10     |
-| WS2812 DATA		|?     |
-| Servo_Control	|9     |
-| DCM_GateP_neg	|?     |
-| DCM_GateP_pos	|?     |
-| DCM_GateN_neg	|?     |
-| DCM_GateN_pos	|?     |
+| Signal        | Arduino Pin   |
+|--------------	|--------		|
+| LED_STATUS	|10     		|
+| Servo1_Control|9     			|
+
+
+| Signal       		| H-Bridge 	| Arduino Pin   |
+|--------------		|--------	|--------------	|
+| DCM1_GateP_neg	|G4			|3     			|
+| DCM1_GateP_pos	|G1			|4     			|
+| DCM1_GateN_neg	|G3			|5 (PWM) 		|
+| DCM1_GateN_pos	|G2			|6 (PWM) 		|
+| DCM1_Motor_pos	|?			|x		|
+| DCM1_Motor_neg	|?			|x		|
+
 
 ## Mechanic Setup ##
 
