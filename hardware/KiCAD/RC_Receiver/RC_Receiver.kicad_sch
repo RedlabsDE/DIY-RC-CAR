@@ -778,6 +778,274 @@
         )
       )
     )
+    (symbol "redLabs:ZXMHC6A07T8-3" (pin_names (offset 1.016)) (in_bom yes) (on_board yes)
+      (property "Reference" "U" (id 0) (at 6.35 11.43 0)
+        (effects (font (size 1.524 1.524)))
+      )
+      (property "Value" "ZXMHC6A07T8-3" (id 1) (at 11.43 -11.43 0)
+        (effects (font (size 1.524 1.524)))
+      )
+      (property "Footprint" "" (id 2) (at 0 0 0)
+        (effects (font (size 1.524 1.524)))
+      )
+      (property "Datasheet" "" (id 3) (at 0 0 0)
+        (effects (font (size 1.524 1.524)))
+      )
+      (symbol "ZXMHC6A07T8-3_0_0"
+        (polyline
+          (pts
+            (xy -2.54 0)
+            (xy -3.81 0)
+          )
+          (stroke (width 0) (type default) (color 0 0 0 0))
+          (fill (type none))
+        )
+        (polyline
+          (pts
+            (xy 2.54 0)
+            (xy 3.81 0)
+          )
+          (stroke (width 0) (type default) (color 0 0 0 0))
+          (fill (type none))
+        )
+      )
+      (symbol "ZXMHC6A07T8-3_0_1"
+        (rectangle (start -11.43 10.16) (end 11.43 -10.16)
+          (stroke (width 0) (type default) (color 0 0 0 0))
+          (fill (type none))
+        )
+        (polyline
+          (pts
+            (xy -3.81 -3.81)
+            (xy -6.35 -3.81)
+          )
+          (stroke (width 0) (type default) (color 0 0 0 0))
+          (fill (type none))
+        )
+        (polyline
+          (pts
+            (xy -3.81 -1.27)
+            (xy -3.81 -5.08)
+          )
+          (stroke (width 0) (type default) (color 0 0 0 0))
+          (fill (type none))
+        )
+        (polyline
+          (pts
+            (xy -3.81 3.81)
+            (xy -6.35 3.81)
+          )
+          (stroke (width 0) (type default) (color 0 0 0 0))
+          (fill (type none))
+        )
+        (polyline
+          (pts
+            (xy -3.81 5.08)
+            (xy -3.81 1.27)
+          )
+          (stroke (width 0) (type default) (color 0 0 0 0))
+          (fill (type none))
+        )
+        (polyline
+          (pts
+            (xy -2.54 -3.81)
+            (xy -3.81 -3.81)
+          )
+          (stroke (width 0) (type default) (color 0 0 0 0))
+          (fill (type none))
+        )
+        (polyline
+          (pts
+            (xy -2.54 -2.54)
+            (xy -3.81 -2.54)
+          )
+          (stroke (width 0) (type default) (color 0 0 0 0))
+          (fill (type none))
+        )
+        (polyline
+          (pts
+            (xy -2.54 2.54)
+            (xy -3.81 2.54)
+          )
+          (stroke (width 0) (type default) (color 0 0 0 0))
+          (fill (type none))
+        )
+        (polyline
+          (pts
+            (xy -2.54 2.54)
+            (xy -2.54 -2.54)
+          )
+          (stroke (width 0) (type default) (color 0 0 0 0))
+          (fill (type none))
+        )
+        (polyline
+          (pts
+            (xy -2.54 3.81)
+            (xy -3.81 3.81)
+          )
+          (stroke (width 0) (type default) (color 0 0 0 0))
+          (fill (type none))
+        )
+        (polyline
+          (pts
+            (xy -2.54 3.81)
+            (xy -2.54 6.35)
+          )
+          (stroke (width 0) (type default) (color 0 0 0 0))
+          (fill (type none))
+        )
+        (polyline
+          (pts
+            (xy -2.54 6.35)
+            (xy -2.54 8.89)
+          )
+          (stroke (width 0) (type default) (color 0 0 0 0))
+          (fill (type none))
+        )
+        (polyline
+          (pts
+            (xy -2.54 8.89)
+            (xy 2.54 8.89)
+          )
+          (stroke (width 0) (type default) (color 0 0 0 0))
+          (fill (type none))
+        )
+        (polyline
+          (pts
+            (xy 0 8.89)
+            (xy 0 10.16)
+          )
+          (stroke (width 0) (type default) (color 0 0 0 0))
+          (fill (type none))
+        )
+        (polyline
+          (pts
+            (xy 2.54 -2.54)
+            (xy 3.81 -2.54)
+          )
+          (stroke (width 0) (type default) (color 0 0 0 0))
+          (fill (type none))
+        )
+        (polyline
+          (pts
+            (xy 2.54 3.81)
+            (xy 3.81 3.81)
+          )
+          (stroke (width 0) (type default) (color 0 0 0 0))
+          (fill (type none))
+        )
+        (polyline
+          (pts
+            (xy 2.54 8.89)
+            (xy 2.54 3.81)
+          )
+          (stroke (width 0) (type default) (color 0 0 0 0))
+          (fill (type none))
+        )
+        (polyline
+          (pts
+            (xy 3.81 -3.81)
+            (xy 2.54 -3.81)
+          )
+          (stroke (width 0) (type default) (color 0 0 0 0))
+          (fill (type none))
+        )
+        (polyline
+          (pts
+            (xy 3.81 -3.81)
+            (xy 6.35 -3.81)
+          )
+          (stroke (width 0) (type default) (color 0 0 0 0))
+          (fill (type none))
+        )
+        (polyline
+          (pts
+            (xy 3.81 -1.27)
+            (xy 3.81 -5.08)
+          )
+          (stroke (width 0) (type default) (color 0 0 0 0))
+          (fill (type none))
+        )
+        (polyline
+          (pts
+            (xy 3.81 1.27)
+            (xy 3.81 5.08)
+          )
+          (stroke (width 0) (type default) (color 0 0 0 0))
+          (fill (type none))
+        )
+        (polyline
+          (pts
+            (xy 3.81 3.81)
+            (xy 6.35 3.81)
+          )
+          (stroke (width 0) (type default) (color 0 0 0 0))
+          (fill (type none))
+        )
+        (polyline
+          (pts
+            (xy 0 -8.89)
+            (xy 2.54 -8.89)
+            (xy 2.54 -3.81)
+          )
+          (stroke (width 0) (type default) (color 0 0 0 0))
+          (fill (type none))
+        )
+        (polyline
+          (pts
+            (xy 3.81 2.54)
+            (xy 2.54 2.54)
+            (xy 2.54 -2.54)
+          )
+          (stroke (width 0) (type default) (color 0 0 0 0))
+          (fill (type none))
+        )
+        (polyline
+          (pts
+            (xy -2.54 -3.81)
+            (xy -2.54 -8.89)
+            (xy 0 -8.89)
+            (xy 0 -10.16)
+          )
+          (stroke (width 0) (type default) (color 0 0 0 0))
+          (fill (type none))
+        )
+      )
+      (symbol "ZXMHC6A07T8-3_1_1"
+        (pin input line (at 16.51 -6.35 180) (length 5.08)
+          (name "G3" (effects (font (size 1.27 1.27))))
+          (number "1" (effects (font (size 1.27 1.27))))
+        )
+        (pin input line (at 0 -15.24 90) (length 5.08)
+          (name "S2,S3" (effects (font (size 1.27 1.27))))
+          (number "2" (effects (font (size 1.27 1.27))))
+        )
+        (pin input line (at -16.51 -6.35 0) (length 5.08)
+          (name "G2" (effects (font (size 1.27 1.27))))
+          (number "3" (effects (font (size 1.27 1.27))))
+        )
+        (pin input line (at -16.51 6.35 0) (length 5.08)
+          (name "G1" (effects (font (size 1.27 1.27))))
+          (number "4" (effects (font (size 1.27 1.27))))
+        )
+        (pin input line (at -16.51 0 0) (length 5.08)
+          (name "D1,D2" (effects (font (size 1.27 1.27))))
+          (number "5" (effects (font (size 1.27 1.27))))
+        )
+        (pin input line (at 0 15.24 270) (length 5.08)
+          (name "S1,S4" (effects (font (size 1.27 1.27))))
+          (number "6" (effects (font (size 1.27 1.27))))
+        )
+        (pin input line (at 16.51 0 180) (length 5.08)
+          (name "D3,D4" (effects (font (size 1.27 1.27))))
+          (number "7" (effects (font (size 1.27 1.27))))
+        )
+        (pin input line (at 16.51 6.35 180) (length 5.08)
+          (name "G4" (effects (font (size 1.27 1.27))))
+          (number "8" (effects (font (size 1.27 1.27))))
+        )
+      )
+    )
   )
 
   (junction (at 33.02 53.34) (diameter 0) (color 0 0 0 0)
@@ -5247,6 +5515,31 @@
     (pin "1" (uuid f5d0623d-d555-40d9-984f-21027b4f7585))
   )
 
+  (symbol (lib_id "redLabs:ZXMHC6A07T8-3") (at 121.92 140.97 0) (unit 1)
+    (in_bom yes) (on_board yes) (fields_autoplaced)
+    (uuid 5f48357f-c353-4808-811f-74ed7ffaa7c6)
+    (property "Reference" "U?" (id 0) (at 123.9394 126.7259 0)
+      (effects (font (size 1.524 1.524)) (justify left))
+    )
+    (property "Value" "ZXMHC6A07T8-3" (id 1) (at 123.9394 129.7193 0)
+      (effects (font (size 1.524 1.524)) (justify left))
+    )
+    (property "Footprint" "" (id 2) (at 121.92 140.97 0)
+      (effects (font (size 1.524 1.524)))
+    )
+    (property "Datasheet" "" (id 3) (at 121.92 140.97 0)
+      (effects (font (size 1.524 1.524)))
+    )
+    (pin "1" (uuid cfb29de7-5d87-4b80-bc4c-399de4fa7fae))
+    (pin "2" (uuid fae21104-6d06-49da-9a8b-b74f2e8a3574))
+    (pin "3" (uuid 91815931-350b-44ea-ae11-854683127765))
+    (pin "4" (uuid 8b7bd606-8d7f-4fbd-a2d5-a4d4e067ee34))
+    (pin "5" (uuid d0bca7c3-16fb-43b6-91c1-9db8fac52cb2))
+    (pin "6" (uuid 0c9b9dd2-dc58-4681-9b25-b9c3d020fbdc))
+    (pin "7" (uuid 9d7add1e-d22e-4c3c-ab8e-6362e975e5d0))
+    (pin "8" (uuid a4f92507-f2b3-4f75-987d-55004c3588b9))
+  )
+
   (symbol (lib_id "Device:R") (at 86.36 104.14 180) (unit 1)
     (in_bom yes) (on_board yes) (fields_autoplaced)
     (uuid 710c87df-58cf-4d1c-ad64-932a210b6aae)
@@ -5506,6 +5799,9 @@
     )
     (path "/0150a597-9ca4-4081-88d2-6ff7d09ea1a2"
       (reference "U1") (unit 1) (value "NRF24L01_Breakout") (footprint "RF_Module:nRF24L01_Breakout")
+    )
+    (path "/5f48357f-c353-4808-811f-74ed7ffaa7c6"
+      (reference "U?") (unit 1) (value "ZXMHC6A07T8-3") (footprint "")
     )
   )
 )
