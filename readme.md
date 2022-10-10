@@ -47,7 +47,7 @@ Too keep it simple, RC (transmitter) and the car (receiver) share the same ardui
 | LED_STATUS		|10     		|
 | Pushbutton_1 		|2     			|
 | Pushbutton_2 		|3     			|
-| Potentiometer_1	|0     			|
+| Poti_1			|0     			|
 
 ### Receiver ###
 - `Board:` Arduino nano (with USB-mini connector)
