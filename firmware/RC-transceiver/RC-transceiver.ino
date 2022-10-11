@@ -133,6 +133,10 @@ void setup_receiver()
   system_init_receiver();
 
   myservo1.attach(PIN_SERVO_1);  // attaches the servo on pin x to the servo object
+  
+
+  myservo1.write(180/2 - 50); //move to left  
+  myservo1.write(180/2 + 50); //move to right   
   myservo1.write(180/2); //move to mid position  
 
   main_engine.init_h_bridge(3,4,5,6,LOW);
@@ -160,8 +164,7 @@ void loop_transmitter()
   static int last_tx_timeout = 0;
   last_tx_timeout++;
 
-  //check battery and powerbutton state
-  //system_check_transmitter();
+  //TODO: system_check_transmitter(); //check battery and powerbutton state, if needed
   
   //check if HMI data changed
   if(hmi_has_changed())
@@ -172,7 +175,7 @@ void loop_transmitter()
   }
   else if(last_tx_timeout > LOOP_MS_TO_COUNT(3000))
   {
-    //last_tx_success = rc_send_command_type(COMMAND_TYPE_PING);
+    last_tx_success = rc_send_command_type(COMMAND_TYPE_PING);
     last_tx_timeout = 0;
   }
 
@@ -213,9 +216,12 @@ void loop_receiver()
     Serial.print(" RX RC_COMMAND: ");    
     printStruct(((uint8_t*)p_command),  sizeof(*p_command));
 
-    rc_handle_received_data(p_command);  
-    last_rx_timeout = 0;
-    connected = true;
+    if(rc_handle_received_data(p_command))
+    {
+      //if packet is valid, reset rx timeout
+      last_rx_timeout = 0;
+      connected = true;
+    }  
   }
 
   main_engine.process();

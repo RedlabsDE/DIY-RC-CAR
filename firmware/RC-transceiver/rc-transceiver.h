@@ -74,7 +74,7 @@ void system_check_transmitter()
   }
 
   bool user_turn_off = false;
-  //TODO check on/off switch or button
+  //TODO: check on/off switch or button
   if(user_turn_off)
   {
     rc_send_command_type(COMMAND_TYPE_SHUTDOWN_USER); //send out last message
