@@ -10,7 +10,7 @@
 /// \par        Board
 ///             Arduino Pro or Pro Mini
 /// \par        Prozessor
-///             ATMega32
+///             ATMega328
 /// \par        COM Port Setting (debug)
 ///             Baud: 115200 / 8N1
 ///
@@ -28,8 +28,11 @@
 //////////////////////////////////////////////////////////////////////////////
 //defines to customize the system
 #define DEBUG true //used for debug serial output
-#define DEBUG_REPLACE_RADIO_BY_SERIAL true
-#define USE_BATTERY_MONITOR false
+
+#define DEBUG_SERIAL_PRINT_RADIO_COMMUNICATION true //serial print everything that is sent or received via radio
+#define DEBUG_SKIP_RADIO_COMMUNICATION false //use for test-setup without working radio communication
+
+#define USE_BATTERY_MONITOR false //if system is powered by a battery the monitor will shutdown the system (transmitter) if battery voltage is below BATTERY_MIN_MV
 //////////////////////////////////////////////////////////////////////////////
 
 enum STATUS_LED
@@ -61,8 +64,8 @@ const uint64_t pipes[2] = { 0xABCDABCD71LL, 0x544d52687CLL };              // Ra
 #include <Servo.h>
 Servo myservo1;  //use this servo to set direcetion (angle of front wheel)
 
-#include "rc_dc_motor.h"
-struct DC_MOTOR_CONTROL dc_motor_1; //use this motor as main engine to drive forward/backward
+#include "dc_motor.h"
+DC_MOTOR main_engine(20,255,5); //use this motor as main engine to drive forward/backward
 
 #include "rc_hmi.h" //user interface (buttons, ...)
 #include "rc_message_types.h"
@@ -87,7 +90,7 @@ void setup()
     setup_receiver();
   #endif
 
-//#if (DEBUG_REPLACE_RADIO_BY_SERIAL == false)
+#if(DEBUG_SKIP_RADIO_COMMUNICATION == false)
   //common setup
   radio.begin();
   radio.setAutoAck(1);                    // Ensure autoACK is enabled
@@ -100,7 +103,7 @@ void setup()
   radio.startListening();                 // Start listening
   //radio.printDetails();                   // Dump the configuration of the rf unit for debugging
   Serial.println(" rx started");
-//#endif
+#endif
 
   //rx/tx specific setup
   #if(USED_TARGET == TARGET_TRANSMITTER)
@@ -132,8 +135,10 @@ void setup_receiver()
   myservo1.attach(PIN_SERVO_1);  // attaches the servo on pin x to the servo object
   myservo1.write(180/2); //move to mid position  
 
-  //dc motor
-  dc_motor1_init();
+  main_engine.init_h_bridge(3,4,5,6,LOW);
+  main_engine.set_speed(100); //set fixed speed, used for both directions
+  main_engine.set_direction(DC_MOTOR::DCM_STOP);
+  main_engine.set_enable(true);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -213,7 +218,7 @@ void loop_receiver()
     connected = true;
   }
 
-  dc_motor_control(&dc_motor_1);
+  main_engine.process();
 
   indicate_status_led(connected==true ? SL_BLINK_SLOW : SL_BLINK_FAST); //last data received within timout: blink fast, timeout expired: blink slow
 
@@ -224,8 +229,7 @@ void loop_receiver()
 
 void receiver_connection_lost()
 {
-  dc_motor_set_direction(&dc_motor_1, DCM_STOP);
-
+  main_engine.set_direction(DC_MOTOR::DCM_STOP);
   //indication of connection loss in loop
 }
 
@@ -257,62 +261,4 @@ void indicate_status_led(uint8_t status)
   {
     digitalWrite(PIN_LED_STATUS, !digitalRead(PIN_LED_STATUS));
   }  
-}
-
-
-void dc_motor1_init()
-{
-  dc_motor_1.pin_gateP_neg = 3; //digital pin to set direction "G4"
-  dc_motor_1.pin_gateP_pos = 4; //digital pin to set direction "G1"
-  dc_motor_1.pin_gateN_neg = 5; //digital pin to set speed via PWM "G3"
-  dc_motor_1.pin_gateN_pos = 6; //digital pin to set speed via PWM "G2"
-
-  dc_motor_1.pmos_active = LOW; //PMOS Gate is connected to GPIO (V_motor = V_uC = 5V), with additional external pull-up to V_motor
-
-  dc_motor_init(&dc_motor_1);
-  dc_motor_enable(&dc_motor_1,true);
-
-  dc_motor_set_speed(&dc_motor_1, 100); //set fixed speed, used for both directions
-
-  //Set Motor PWM frequency, (default: 490 Hz), //this changes the delay() time!!!!
-  //setPwmFrequency(dc_motor_1.pin_gateN_pos,1); //set PWM freq to 32kHz (31250/1 Hz)
-  //setPwmFrequency(dc_motor_1.pin_gateN_neg,1); //set PWM freq to 32kHz (31250/1 Hz)
-}
-
-
-//TODO test
-void setPwmFrequency(int pin, int divisor)
-{
-  byte mode;
-  if(pin == 5 || pin == 6 || pin == 9 || pin == 10)
-  {
-    switch(divisor)
-    {
-      case 1: mode = 0x01; break;
-      case 8: mode = 0x02; break;
-      case 64: mode = 0x03; break;
-      case 256: mode = 0x04; break;
-      case 1024: mode = 0x05; break;
-      default: return;
-    }
-    if(pin == 5 || pin == 6)
-    {
-      TCCR0B = TCCR0B & 0b11111000 | mode;
-    } else
-    {
-      TCCR1B = TCCR1B & 0b11111000 | mode;
-    }
-  } else if(pin == 3 || pin == 11) {
-    switch(divisor) {
-      case 1: mode = 0x01; break;
-      case 8: mode = 0x02; break;
-      case 32: mode = 0x03; break;
-      case 64: mode = 0x04; break;
-      case 128: mode = 0x05; break;
-      case 256: mode = 0x06; break;
-      case 1024: mode = 0x07; break;
-      default: return;
-    }
-    TCCR2B = TCCR2B & 0b11111000 | mode;
-  }
 }

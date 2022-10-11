@@ -12,7 +12,6 @@ void loop_transmitter();
 // Receiver specific code
 void setup_receiver();
 void loop_receiver();
-void dc_motor1_init();
 
 void servo_set_position_from_adc(uint8_t adcValue);
 
@@ -113,13 +112,6 @@ void system_init_receiver()
 {
   pinMode(PIN_LED_STATUS, OUTPUT); 
   digitalWrite(PIN_LED_STATUS, HIGH); //Status LED ON
-
-  pinMode(PIN_MOTOR_DIR, OUTPUT); 
-  digitalWrite(PIN_MOTOR_DIR, HIGH); //
-
-  pinMode(PIN_MOTOR_PWM, OUTPUT); 
-  digitalWrite(PIN_MOTOR_PWM, HIGH); //
-
 }
 //////////////////////////////////////////////////////////////////////////////
 bool battery_voltage_ok()
@@ -246,13 +238,14 @@ void GO_TO_SLEEP(bool enableWakeup)
 //////////////////////////////////////////////////////////////////////////////
 bool Nrf_TransmitData(struct RC_COMMAND* pPacket)
 {
-//#if (DEBUG_REPLACE_RADIO_BY_SERIAL)
+#if(DEBUG_SERIAL_PRINT_RADIO_COMMUNICATION)
     Serial.println();
     Serial.print("TX payload: ");
     
     printStruct(((uint8_t*)pPacket),  sizeof(*pPacket));
-    //return true;
-//#else
+#endif
+
+#if (DEBUG_SKIP_RADIO_COMMUNICATION == false)
   radio.stopListening(); 
   bool tx_success = radio.write(pPacket, sizeof(*pPacket) ); //auto ack will return true if packet was sent and received
   radio.startListening(); 
@@ -267,7 +260,11 @@ bool Nrf_TransmitData(struct RC_COMMAND* pPacket)
   }
   
   return tx_success;
-//#endif
+#else
+  return true;
+#endif
+
+
 }
 
 bool rc_send_command_type(enum RC_COMMAND_TYPE command_type)
@@ -378,18 +375,17 @@ bool rc_handle_received_data(struct RC_COMMAND* p_command)
 
 void motor1_set_direction_from_buttons(uint8_t button_fwd, uint8_t button_rwd)
 {
-  //
   if(button_fwd == BS_PRESSED || button_fwd == BS_REPEATED || button_fwd == BS_LONG_PRESS)
   {
-    dc_motor_set_direction(&dc_motor_1, DCM_FWD);
+    main_engine.set_direction(DC_MOTOR::DCM_FWD);
   }
   else if(button_rwd == BS_PRESSED || button_rwd == BS_REPEATED || button_rwd == BS_LONG_PRESS)
   {
-    dc_motor_set_direction(&dc_motor_1, DCM_RWD);
+    main_engine.set_direction(DC_MOTOR::DCM_RWD);
   }
   else
   {
-    dc_motor_set_direction(&dc_motor_1, DCM_STOP);
+    main_engine.set_direction(DC_MOTOR::DCM_STOP);
   }
 
 }

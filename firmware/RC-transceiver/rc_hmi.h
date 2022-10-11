@@ -128,8 +128,6 @@ void hmi_read_current_data(struct RC_HMI_DATA* current_hmi_data)
     current_hmi_data->button_state[buttonIndex]  = newState; 
   }
 
-  static uint8_t fooCounter = 0;
-
   //ADC
   // use external ADC reference voltage
   // if (swichted-) supply voltage of potentiometers is connected to AREF, max poti position will result in max adc value. Independent of actual voltage level of supply.
