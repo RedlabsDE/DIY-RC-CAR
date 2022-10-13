@@ -393,7 +393,8 @@ void motor1_set_direction_from_buttons(uint8_t button_fwd, uint8_t button_rwd)
 // Use analog value of potentiometer (0...255) to set servo position
 void servo1_set_position_from_adc(uint8_t adcValue)
 {
-      int newServoPosition = map(adcValue,0,255,0,180);// scale it to use it with the servo (value between 0 and 180)
+      //int newServoPosition = map(adcValue,0,255,0,180);// scale it to use it with the servo (full servo range, value between 0 and 180)
+      int newServoPosition = map(adcValue,0,255,45,135);// scale it to use it with the servo (limited servo range)
       
       //apply range for driving straight ahead
       int midPosition = 180/2;
@@ -402,9 +403,6 @@ void servo1_set_position_from_adc(uint8_t adcValue)
       {
         newServoPosition = midPosition;
       }
-      else
-      {
-        myservo1.write(newServoPosition);
-        delay(10); //TODO test: give servo some time
-      }
+      myservo1.write(newServoPosition);
+
 }
