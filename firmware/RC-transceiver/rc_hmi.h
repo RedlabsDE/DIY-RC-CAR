@@ -10,7 +10,7 @@
 #define PIN_BUTTON_4 3 //<<< custom setting
 #define PIN_BUTTON_5 3 //<<< custom setting
 
-#define PIN_ADC_POTI_1 0 //<<< custom setting
+#define PIN_ADC_POTI_1 A0 //<<< custom setting
 #define PIN_ADC_POTI_2 1 //<<< custom setting
 
 
@@ -84,6 +84,8 @@ int get_averaged_Adc(int adcPin)
   }
   adcVal = adcVal / 10;
 
+  //Serial.print(analogRead(A0)); //debug julian
+
   return (int)adcVal;
 }
 
@@ -131,11 +133,12 @@ void hmi_read_current_data(struct RC_HMI_DATA* current_hmi_data)
   //ADC
   // use external ADC reference voltage
   // if (swichted-) supply voltage of potentiometers is connected to AREF, max poti position will result in max adc value. Independent of actual voltage level of supply.
-  analogReference(EXTERNAL);
+  //analogReference(EXTERNAL); //commented out for 5V Powerbank supply
   
   for(int adcIndex = 0; adcIndex<HMI_ANALOG_8BIT_COUNT; adcIndex++)
   { 
     int newAdc = get_averaged_Adc(pin_list_adc_8bit[adcIndex]);
+
     //apply hystersis    
     int diff = abs(p_last_hmi_data->analog_values[adcIndex] - (uint8_t) map(newAdc,0,1023,0,255));
     if(diff > ADC_HYSTERESIS_COUNTS)
