@@ -12,12 +12,15 @@ Create a simple remote controlled car.
 ## Firmware Setup ##
 Too keep it simple, RC (transmitter) and the car (receiver) share the same arduino code.
 
+- upload sketch to transmitter & receicer
 ```
 #define TARGET_TRANSMITTER  1 //Remote Control
 #define TARGET_RECEIVER     2 //Car
 
 #define USED_TARGET TARGET_TRANSMITTER //<<< set target to be compiled
 ```
+- check connection: if status LED flashes fast on receiver/transmitter there is no connection 
+
 ## Hardware Setup ##
 
 - Find schematics of transmitter and receiver in `...\RC-Transceiver\hardware\schematic`
@@ -35,8 +38,8 @@ Too keep it simple, RC (transmitter) and the car (receiver) share the same ardui
 | NRF_IRQ      	| N/A 	|
 
 ### Transmitter ###
-- `Board:` Arduino Pro Mini (without USB connector)
-- `Supply:` Battery (3x 1.2V AA Rechargeable) 
+- `Board:` Arduino nano (with USB-mini connector)
+- `Supply:` 5V (USB Powerbank) via Arduino USB connector
 - `NRF24L01:` Connect NRF supply pin to 3V, Arduino Pro Mini: "VCC"
 - `Push Buttons:` connect other pin to ground (active low)
 - `Status LED:` connect other pin to ground (active high)
@@ -47,7 +50,7 @@ Too keep it simple, RC (transmitter) and the car (receiver) share the same ardui
 | LED_STATUS		|10     		|
 | Pushbutton_1 		|2     			|
 | Pushbutton_2 		|3     			|
-| Poti_1			|0     			|
+| Poti_1			|0 (A0)			|
 
 ### Receiver ###
 - `Board:` Arduino nano (with USB-mini connector)
@@ -55,7 +58,7 @@ Too keep it simple, RC (transmitter) and the car (receiver) share the same ardui
 - `NRF24L01:` Connect NRF supply pin to 3V, Arduino Nano: "3V3"
 - `Status LED:` connect other pin to ground (active high)
 - `Servo:` connect supply pin to 5V
-- `H-Bridge Motor Driver:` connect supply pin to 5V
+- `Motor Driver:` connect supply pin to 5V *(H-Bridge IC could be replaced by 2xNFET + 2xPFET)*
 - `DC Motor:` Connect Motor pins to motor driver
 
 | Signal        | Arduino Pin   |
@@ -70,11 +73,13 @@ Too keep it simple, RC (transmitter) and the car (receiver) share the same ardui
 | DCM1_GateP_pos	|G1			|4     			|
 | DCM1_GateN_neg	|G3			|5 (PWM) 		|
 | DCM1_GateN_pos	|G2			|6 (PWM) 		|
-| DCM1_Motor_pos	|?			|x		|
-| DCM1_Motor_neg	|?			|x		|
 
 
 ## Mechanic Setup ##
+### Transmitter ###
+- Set direction of car: use potentiometer
+- Move forward/backward: Use dual push switch (push&hold), idle position is stop
 
-- Use DC Motor to drive car forward and backward
-- Use Servo to rotate single front wheel to set direction
+### Receiver ###
+- Drive car forward and backward: Use single DC Motor to drive both back wheels
+- Set direction of car: Use Servo to set angle of single front wheel
