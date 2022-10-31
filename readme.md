@@ -1,6 +1,6 @@
-# README #
+# Create a simple DIY remote controlled car
 
-Create a simple remote controlled car.
+![Car and Remote](documentation/RC-Car-and-Remote.png "Car and Remote")
 
 ### What is this repository for? ###
 
@@ -8,6 +8,7 @@ Create a simple remote controlled car.
 	- RC and Car are bothed based on an arduino and will communicate via a wireless module (NRF24L01, 2.4GHz)
 	- The RC (transmitter) looks for user input (Buttons,..) and send current state
 	- The Car (receiver) reacts to received user input and set direction and speed of motor
+	- Receiver and Transmitter are powered by a small USB Powerbank
 
 ## Firmware Setup ##
 Too keep it simple, RC (transmitter) and the car (receiver) share the same arduino code.
@@ -19,14 +20,14 @@ Too keep it simple, RC (transmitter) and the car (receiver) share the same ardui
 
 #define USED_TARGET TARGET_TRANSMITTER //<<< set target to be compiled
 ```
-- check connection: if status LED flashes fast on receiver/transmitter there is no connection 
+- check connection: if status LED flashes fast on receiver/transmitter there is no connection (motor stops if connection is lost)
 
 ## Hardware Setup ##
 
 - Find schematics of transmitter and receiver in `...\RC-Transceiver\hardware\schematic`
 - Find datasheets of used components in `...\RC-Transceiver\hardware\datasheet`
 
-- `NRF24L01:` Transmitter and Receiver use same NRF pin setup
+- `NRF24L01:` Transmitter and Receiver use same NRF pin setup. Find nice introduction here:  https://lastminuteengineers.com/nrf24l01-arduino-wireless-communication/
 
 | Signal      | Arduino Pin    |
 |---------------|-------|
@@ -74,12 +75,16 @@ Too keep it simple, RC (transmitter) and the car (receiver) share the same ardui
 | DCM1_GateN_neg	|G3			|5 (PWM) 		|
 | DCM1_GateN_pos	|G2			|6 (PWM) 		|
 
+![Receiver Circuit](documentation/Receiver.jpg "Receiver Circuit")
 
 ## Mechanic Setup ##
 ### Transmitter ###
+- A simple plastic box is used as RC housing
 - Set direction of car: use potentiometer
 - Move forward/backward: Use dual push switch (push&hold), idle position is stop
 
 ### Receiver ###
-- Drive car forward and backward: Use single DC Motor to drive both back wheels
-- Set direction of car: Use Servo to set angle of single front wheel
+- As a car frame, wooden plates are nailed together (could be easily done by kids)
+- As back wheels old metal caps are screwed to the axis (axis made of threaded standoff)
+- Drive car forward and backward: Use single DC Motor to drive both back wheels (old DC motor with gears)
+- Set direction of car: Use Servo to set angle of single front wheel (wheel is glued to the servo)
